@@ -95,9 +95,18 @@ class grid:
         fig = plt.figure(figsize=(15, 15), dpi=80)
         if self.d == 2:
             ax = plt.axes()
-            ax.set_xticks(ticks)
-            ax.set_yticks(ticks)
+        elif self.d == 3:
+            ax = plt.axes(projection='3d')
+            ax.set_zticks(ticks)
+            ax.set_zlim(0, n - 1)
             
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+        ax.set_xlim(0, n - 1)
+        ax.set_ylim(0, n - 1)
+        
+        
+        if self.d == 2:
             for x in range(n):
                 for y in range(n):
                     if x == 0:
@@ -107,12 +116,7 @@ class grid:
 
             ax.scatter([0], [0], color='black', s=250) # scatter all dots instead
             
-        elif self.d == 3:
-            ax = plt.axes(projection='3d')
-            ax.set_xticks(ticks)
-            ax.set_yticks(ticks)
-            ax.set_zticks(ticks)
-            
+        elif self.d == 3:            
             for x in range(n):
                 for y in range(n):
                     for z in range(n):
@@ -123,9 +127,9 @@ class grid:
                         if z == 0:
                             ax.plot3D([x, x], [y, y], [0, n - 1], 'grey')
 
-            ax.plot3D([0, n - 1], [0, 0], [0, 0], 'red') # red for X axis
-            ax.plot3D([0, 0], [0, n - 1], [0, 0], 'green') # green for Y axis
-            ax.plot3D([0, 0], [0, 0], [0, n - 1], 'blue') # blue for Z axis
+            ax.plot3D([0, n - 1], [0, 0], [0, 0], 'red') # red to visualize X axis
+            ax.plot3D([0, 0], [0, n - 1], [0, 0], 'green') # green to visualize Y axis
+            ax.plot3D([0, 0], [0, 0], [0, n - 1], 'blue') # blue to visualize Z axis
             
             ax.scatter([0], [0], [0], color='black', s=250) # scatter all dots instead
             
@@ -134,6 +138,10 @@ class grid:
             
         if axis == 'off':
             plt.axis('off')
+        else:
+            ax.set_xlabel('X axis')
+            ax.set_ylabel('Y axis')
+            ax.set_zlabel('Z axis')
         plt.show()
             
 
@@ -165,8 +173,6 @@ ax.scatter([0], [0], [0], color='black', s=250) # scatter a single dot on (0, 0,
 
 ax.set_xlim(0, n - 1)
 ax.set_ylim(0, n - 1)
-# plt.xlim([0, n - 1])
-# plt.ylim([0, n - 1])
 ax.set_zlim(0, n - 1)
 
 # view with axis:
