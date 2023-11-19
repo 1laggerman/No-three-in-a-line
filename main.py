@@ -36,7 +36,6 @@ class Point:
         return False
     
     def onTheSameLine(self, point2: "Point", point3: "Point"):
-        # fix dx = 0 problem
         
         if self == point2 or self == point3 or point2 == point3:
             return True
@@ -151,10 +150,10 @@ class Grid:
             
             
     def choose_points_recursive(self, max, chosen_points: list = list()):
-        current_max = (chosen_points, len(chosen_points) + len(self.points))
+        current_max = (list.copy(chosen_points), len(chosen_points) + len(self.points))
         if current_max[1] == max:
             return current_max
-        validPoints = self.getAllValidPoints(chosen=chosen_points)
+        validPoints = self.getAllValidPoints(chosen=list.copy(chosen_points))
         if len(validPoints) == 0:
             return current_max
         
@@ -239,7 +238,7 @@ class Grid:
 
 grid = Grid(3, 2)
 grid.add_point(Point(0, 0))
-grid.add_point(Point(0, 1))
+grid.add_point(Point(1, 1))
 max = grid.brute_force_recursive_2D()
 print('-------END RUN-------')
 print(max)
@@ -252,5 +251,5 @@ for point in valid:
     print(point)
 print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
-# grid.draw_grid()
+grid.draw_grid()
 
