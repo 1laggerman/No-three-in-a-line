@@ -145,12 +145,13 @@ class Grid:
                 
         else:
             max = self.choose_points_recursive(2 * self.n)
-        self.add_points(max[0])
+        self.add_points(max[0][0])
+        self.solutions = max[0]
         return max[1]
             
             
     def choose_points_recursive(self, max, chosen_points: list = list()):
-        current_max = (list.copy(chosen_points), len(chosen_points) + len(self.points))
+        current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
         if current_max[1] == max:
             return current_max
         validPoints = self.getAllValidPoints(chosen=list.copy(chosen_points))
@@ -162,8 +163,8 @@ class Grid:
             t = self.choose_points_recursive(max, chosen_points=chosen_points)
             if t[1] > current_max[1]:
                 current_max = t
-                if current_max[1] == max:
-                    return current_max
+            elif t[1] == current_max[1] or t[1] == max:
+                current_max[0].extend(t[0])
             chosen_points.remove(point)
         
         return current_max
@@ -237,8 +238,8 @@ class Grid:
             
 
 grid = Grid(3, 2)
-grid.add_point(Point(0, 0))
-grid.add_point(Point(1, 1))
+# grid.add_point(Point(0, 0))
+# grid.add_point(Point(1, 1))
 max = grid.brute_force_recursive_2D()
 print('-------END RUN-------')
 print(max)
@@ -250,6 +251,13 @@ print("valid points:")
 for point in valid:
     print(point)
 print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
+
+i = 1
+for s in grid.solutions:
+    print(f'solution {i}')
+    for point in s:
+        print(point)
+    i = i + 1
 
 grid.draw_grid()
 
