@@ -86,23 +86,31 @@ class Grid:
     def add_point(self, p: Point):
         self.points.append(p)
         
-    def getAllValidPoints(self, d: Dimentions = Dimentions.D2, z_layer: int = 0):
+    def add_points(self, points_arr: list):
+        for point in points_arr:
+            self.points.append(point)
+        
+    def getAllValidPoints(self, d: Dimentions = Dimentions.D2, z_layer: int = 0, chosen: list = list()):
+        chosen.extend(self.points)
         ValidPoints = list()
         for x in range(self.n):
             for y in range(self.n):
                 if d == Dimentions.D2:
                     if len(self.points) > 0:
-                        z = self.points[0].z
+                        z = chosen[0].z
                     else:
                         z = z_layer
                     thisPoint = Point(x, y, z)
                     
-                    if len(self.points) == 0:
+                    if len(chosen) == 0:
                         ValidPoints.append(thisPoint)
+                    elif len(chosen) == 1:
+                        if thisPoint != chosen[0]:
+                            ValidPoints.append(thisPoint)
                     else:
                         pointValid = True
-                        for point1, point2 in it.combinations(self.points, 2):
-                            if thisPoint != point1 != point2 and thisPoint.onTheSameLine(point1, point2):
+                        for point1, point2 in it.combinations(chosen, 2):
+                            if thisPoint.onTheSameLine(point1, point2):
                                 pointValid = False
                         if pointValid:
                             ValidPoints.append(thisPoint)
@@ -113,7 +121,7 @@ class Grid:
                         if len(self.points) == 0:
                             ValidPoints.append(thisPoint)
                         elif len(self.points) == 1:
-                            if thisPoint != self.points[0]:
+                            if thisPoint != chosen[0]:
                                 ValidPoints.append(thisPoint)
                         else:
                             pointValid = True
@@ -121,13 +129,56 @@ class Grid:
                                 if thisPoint.onTheSameLine(point1, point2):
                                     pointValid = False
                             if pointValid:
-                                print(f"this: {thisPoint}, 1: {point1}")
+                                # print(f"this: {thisPoint}, 1: {point1}")
                                 ValidPoints.append(thisPoint)
                                 
                                     
         return ValidPoints
+    
+    def brute_force_recursive_2D(self):
+        valid = self.getAllValidPoints()
+        max = (self.points, len(self.points))
+        if len(self.points) == 0:
+            for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
+                t = self.choose_points_recursive(2 * self.n, list((point1, point2)))
+                # for point in t[0]:
+                    # print(point)
+                if t[1] > max[1]:
+                    max = t
+                # print("------")
+                
+        else:
+            max = self.choose_points_recursive(2 * self.n)
+        self.add_points(max[0])
+        return max[1]
+            
+            
+    def choose_points_recursive(self, max, chosen_points: list = list()):
+        current_max = (chosen_points, len(chosen_points) + len(self.points))
+        if current_max[1] == max:
+            return current_max
+        validPoints = self.getAllValidPoints(chosen_points)
+        if len(validPoints) == 0:
+            return current_max
         
-    def draw_grid(self, axis='off'):
+        print("looking...")
+        
+        for point in validPoints:
+            chosen_points.append(point)
+            t = self.choose_points_recursive(max, chosen_points)
+            # print(type(t))
+            if t[1] > current_max[1]:
+                current_max = t
+                if current_max[1] == max:
+                    return current_max
+            chosen_points.remove(point)
+        
+        return current_max
+            
+            
+        # for point1, point2 in it.combinations(self.points, 2):
+        
+    def draw_grid(self, axis: str ='off'):
         ticks = np.arange(0, self.n, 1)
         fig = plt.figure(figsize=(12, 10), dpi=80)
         if self.d == 2:
@@ -139,17 +190,15 @@ class Grid:
             
         ax.set_xticks(ticks)
         ax.set_yticks(ticks)
-        ax.set_xlim(0, self.n - 1)
-        ax.set_ylim(0, self.n - 1)
+        # ax.set_xlim(-0.1, self.n - 0.9)
+        # ax.set_ylim(-0.1, self.n - 0.9)
         
         
         if self.d == 2:
             for x in range(self.n):
-                for y in range(self.n):
-                    if x == 0:
-                        ax.plot([0, self.n - 1], [y, y], 'grey')
-                    if y == 0:
-                        ax.plot([x, x], [0, self.n - 1], 'grey')
+                ax.plot([x, x], [0, self.n - 1], 'grey')
+            for y in range(self.n):
+                ax.plot([0, self.n - 1], [y, y], 'grey')
 
             for point in self.points:
                 ax.scatter([point.x], [point.y], color='black', s=250)
@@ -188,20 +237,22 @@ class Grid:
         else:
             ax.set_xlabel('X axis')
             ax.set_ylabel('Y axis')
-            ax.set_zlabel('Z axis')
+            if self.d == 3:
+                ax.set_zlabel('Z axis')
             
         # manager = plt.get_current_fig_manager()
         # manager.full_screen_toggle()
+        # ax.margins(0.02)
         plt.show()
             
 
-grid = Grid(3, 3)
-grid.add_point(Point(0, 0, 0))
-grid.add_point(Point(0, 0, 2))
-grid.add_point(Point(0, 2, 0))
-grid.add_point(Point(2, 0, 0))
-grid.add_point(Point(1, 1, 1))
-valid = grid.getAllValidPoints(Dimentions.D3)
+grid = Grid(3, 2)
+grid.add_point(Point(0, 0))
+grid.add_point(Point(0, 1))
+valid = grid.getAllValidPoints()
+for point in grid.points:
+    print(point)
+print('-----')
 for point in valid:
     print(point)
 print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
