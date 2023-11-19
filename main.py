@@ -130,7 +130,6 @@ class Grid:
                                 if thisPoint.onTheSameLine(point1, point2):
                                     pointValid = False
                             if pointValid:
-                                # print(f"this: {thisPoint}, 1: {point1}")
                                 ValidPoints.append(thisPoint)
                                 
                                     
@@ -141,13 +140,9 @@ class Grid:
         max = (self.points, len(self.points))
         if len(self.points) == 0:
             for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
-                # print(point1, point2)
                 t = self.choose_points_recursive(2 * self.n, list((point1, point2)))
-                # for point in t[0]:
-                    # print(point)
                 if t[1] > max[1]:
                     max = t
-                # print("------")
                 
         else:
             max = self.choose_points_recursive(2 * self.n)
@@ -157,23 +152,15 @@ class Grid:
             
     def choose_points_recursive(self, max, chosen_points: list = list()):
         current_max = (chosen_points, len(chosen_points) + len(self.points))
-        # print(current_max)
         if current_max[1] == max:
             return current_max
         validPoints = self.getAllValidPoints(chosen=chosen_points)
-        print(str(len(validPoints)) + " valid for chosen:")
-        for point in chosen_points:
-            print(point)
-        print('---------------')
         if len(validPoints) == 0:
             return current_max
-        
-        print("looking...")
         
         for point in validPoints:
             chosen_points.append(point)
             t = self.choose_points_recursive(max, chosen_points=chosen_points)
-            # print(type(t))
             if t[1] > current_max[1]:
                 current_max = t
                 if current_max[1] == max:
@@ -181,9 +168,6 @@ class Grid:
             chosen_points.remove(point)
         
         return current_max
-            
-            
-        # for point1, point2 in it.combinations(self.points, 2):
         
     def draw_grid(self, axis: str ='off'):
         ticks = np.arange(0, self.n, 1)
@@ -254,8 +238,8 @@ class Grid:
             
 
 grid = Grid(3, 2)
-# grid.add_point(Point(0, 0))
-# grid.add_point(Point(0, 1))
+grid.add_point(Point(0, 0))
+grid.add_point(Point(0, 1))
 max = grid.brute_force_recursive_2D()
 print('-------END RUN-------')
 print(max)
@@ -268,5 +252,5 @@ for point in valid:
     print(point)
 print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
-grid.draw_grid()
+# grid.draw_grid()
 
