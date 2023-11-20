@@ -12,28 +12,27 @@ class Point:
     x = 0
     y = 0
     z = 0
+    n = 3
 
-    def __init__(self, x: int = 0, y: int = 0, z: int = 0):
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        if z < 0:
-            z = 0
+    def __init__(self, x: int = 0, y: int = 0, z: int = 0, n: int = 3):
         self.x = x
         self.y = y
         self.z = z
+        self.n = n
     
     def __str__(self) -> str:
         return f"({self.x}, {self.y}, {self.z})"
         
     def __add__(self, __other: "Point"):
-        return Point(self.x + __other.x, self.y + __other.y, self.z + __other.z)
+        return Point(self.x + __other.x, self.y + __other.y, self.z + __other.z, max(self.n, __other.n))
     
     def __eq__(self, __value: "Point") -> bool:
         if self.x == __value.x and self.y == __value.y and self.z == __value.z:
             return True
         return False
+    
+    def __hash__(self) -> int:
+        return self.x + (self.y * self.n) + (self.z * pow(self.n, 2))
     
     def onTheSameLine(self, point2: "Point", point3: "Point"):
         
@@ -100,7 +99,7 @@ class Grid:
                         z = chosen[0].z
                     else:
                         z = z_layer
-                    thisPoint = Point(x, y, z)
+                    thisPoint = Point(x, y, z, self.n)
                     
                     if len(chosen) == 0:
                         ValidPoints.append(thisPoint)
@@ -116,7 +115,7 @@ class Grid:
                             ValidPoints.append(thisPoint)
                 elif d == Dimentions.D3:
                     for z in range(self.n):
-                        thisPoint = Point(x, y, z)
+                        thisPoint = Point(x, y, z, self.n)
                         
                         if len(self.points) == 0:
                             ValidPoints.append(thisPoint)
@@ -159,11 +158,33 @@ class Grid:
             return current_max
         
         for point in validPoints:
-            chosen_points.append(point)
+            # find sorted location by of 3-dimentional point:
+            loc = 0
+            while loc < len(chosen_points) and point.x > chosen_points[loc].x:
+                loc = loc + 1
+            while loc < len(chosen_points) and point.x == chosen_points[loc].x and point.y > chosen_points[loc].y:
+                loc = loc + 1
+            while loc < len(chosen_points) and point.x == chosen_points[loc].x and point.y == chosen_points[loc].y and point.z > chosen_points[loc].z:
+                loc = loc + 1
+            if loc == len(chosen_points):
+                chosen_points.append(point)
+            else:
+                chosen_points.insert(loc, point)
+            
+            # call recursively to choose other points and get the max result:
             t = self.choose_points_recursive(max, chosen_points=chosen_points)
-            if t[1] > current_max[1]:
+            if t[1] > current_max[1]: # bigger max found, replace the old max
                 current_max = t
-            elif t[1] == current_max[1] or t[1] == max:
+            elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
+                # check solutions are not identical using sorted quality of chosen_points list:
+                for solution1 in current_max[0]:
+                    for solution2 in t[0]:
+                        i = 0
+                        while i < current_max[1] and solution1[i] == solution2[i]:
+                            i = i + 1
+                        t[0].remove(solution2)
+                    
+                # add all valid solutions:
                 current_max[0].extend(t[0])
             chosen_points.remove(point)
         
@@ -237,13 +258,14 @@ class Grid:
         plt.show()
             
 
-grid = Grid(3, 2)
+n = 3
+grid = Grid(n=n, d=2)
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 max = grid.brute_force_recursive_2D()
 print('-------END RUN-------')
 print(max)
-valid = grid.getAllValidPoints(chosen=list([Point(1, 0)]))
+valid = grid.getAllValidPoints(chosen=list([Point(1, 0, n=n)]))
 print("points on grid: ")
 for point in grid.points:
     print(point)
