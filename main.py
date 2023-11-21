@@ -7,33 +7,72 @@ class Dimentions(Enum):
     D2 = 2
     D3 = 3
     
-
-class Point:
+class Point2D:
     x = 0
     y = 0
+    
+    def __init__(self, x: int = 0, y: int = 0):
+        self.x = x
+        self.y = y
+    
+    def __str__(self) -> str:
+        return f"({self.x}, {self.y})"
+        
+    def __add__(self, __other: "Point2D"):
+        return Point2D(self.x + __other.x, self.y + __other.y)
+    
+    def __eq__(self, __value: "Point2D") -> bool:
+        if self.x == __value.x and self.y == __value.y:
+            return True
+        return False
+    
+    def convert(self, z: int = 0):
+        return Point3D(self.x, self.y, z)
+    
+    def onTheSameLine(self, point2: "Point2D", point3: "Point2D"):
+        if self == point2 or self == point3 or point2 == point3:
+            return True
+        
+        dx2 = self.x - point2.x
+        dx3 = self.x - point3.x
+        dy2 = self.y - point2.y
+        dy3 = self.y - point3.y
+        
+        if dx2 == 0 and dx3 == 0:
+            if dy2 == 0 or dy3 == 0:
+                return False
+        elif dx2 == 0 or dx3 == 0:
+            return False
+
+        Mxy2 = dy2 / dx2
+        Mxy3 = dy3 / dx3
+        if Mxy2 != Mxy3:
+            return False
+        return True
+
+
+class Point3D(Point2D):
     z = 0
 
     def __init__(self, x: int = 0, y: int = 0, z: int = 0):
-        self.x = x
-        self.y = y
+        super().__init__(x, y)
         self.z = z
     
     def __str__(self) -> str:
         return f"({self.x}, {self.y}, {self.z})"
         
-    def __add__(self, __other: "Point"):
-        return Point(self.x + __other.x, self.y + __other.y, self.z + __other.z)
+    def __add__(self, __other: "Point3D"):
+        return Point3D(self.x + __other.x, self.y + __other.y, self.z + __other.z)
     
-    def __eq__(self, __value: "Point") -> bool:
-        if self.x == __value.x and self.y == __value.y and self.z == __value.z:
+    def __eq__(self, __value: "Point2D") -> bool:
+        if self.x == __value.x and self.y == __value.y:
             return True
         return False
     
-    def __hash__(self) -> int:
-        return self.x + (self.y * self.n) + (self.z * pow(self.n, 2))
+    def convert(self):
+        return Point2D(self.x, self.y)
     
-    def onTheSameLine(self, point2: "Point", point3: "Point"):
-        
+    def onTheSameLine(self, point2: "Point3D", point3: "Point3D"):
         if self == point2 or self == point3 or point2 == point3:
             return True
         
@@ -79,25 +118,28 @@ class Grid:
         self.n = n
         self.d = d
         
-    def add_point(self, p: Point):
+    def add_point(self, p):
         self.points.append(p)
         
     def add_points(self, points_arr: list):
         for point in points_arr:
             self.points.append(point)
+            
+    def issolution(self, points: list = list()):
+        points.extend(self.points)
+        for point1, point2, point3 in it.combinations(points, 3):
+            if point1.onTheSameLine(point2, point3):
+                return False
+        return True
         
-    def getAllValidPoints(self, d: Dimentions = Dimentions.D2, z_layer: int = 0, chosen: list = list()):
+    def getAllValidPoints(self, d: Dimentions = Dimentions.D2, chosen: list = list()):
         chosen.extend(self.points)
 
         ValidPoints = list()
         for x in range(self.n):
             for y in range(self.n):
                 if d == Dimentions.D2:
-                    if len(self.points) > 0:
-                        z = chosen[0].z
-                    else:
-                        z = z_layer
-                    thisPoint = Point(x, y, z)
+                    thisPoint = Point2D(x, y)
                     
                     if len(chosen) == 0:
                         ValidPoints.append(thisPoint)
@@ -113,7 +155,7 @@ class Grid:
                             ValidPoints.append(thisPoint)
                 elif d == Dimentions.D3:
                     for z in range(self.n):
-                        thisPoint = Point(x, y, z)
+                        thisPoint = Point3D(x, y, z)
                         
                         if len(self.points) == 0:
                             ValidPoints.append(thisPoint)
@@ -130,8 +172,15 @@ class Grid:
                                 
         return ValidPoints
     
+    def brute_force_recursive(self):
+        if self.d == 2:
+            self.brute_force_recursive_2D()
+        elif self.d == 3:
+            self.brute_force_recursive_2D()
+            # self.order_solutions()
+    
     def brute_force_recursive_2D(self):
-        valid = self.getAllValidPoints()
+        valid = self.getAllValidPoints(d = Dimentions.D2)
         current_max = (list([self.points]), len(self.points))
         if len(self.points) == 0:
             for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
@@ -145,6 +194,9 @@ class Grid:
             t = self.choose_points_recursive(2 * self.n)
         self.solutions = current_max[0]
         return (len(self.solutions), current_max[1])
+    
+    # def order_solutions(self):
+        
     
     def union_solutions(self, set1: list, set2: list, length: int):
         for solution1 in set1:
@@ -259,22 +311,33 @@ class Grid:
         # manager.full_screen_toggle()
         # ax.margins(0.02)
         plt.show()
+
+
+
+# p1 = Point2D(1, 1)
+# p2 = Point2D(0, 2)
+# isinstance
+# print(Point2D(1, 2) + Point3D(0, 1, 2))
+
+
+       
+       
             
 
-n = 3
+n = 4
 grid = Grid(n=n, d=2)
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 max = grid.brute_force_recursive_2D()
 print('-------END RUN-------')
 print(f"brute force max solution for n = {grid.n}: {max}")
-# valid = grid.getAllValidPoints(chosen=list([Point(1, 0, n=n)]))
+# valid = grid.getAllValidPoints(d = Dimentions.D2)
 # print("points on grid: ")
 # for point in grid.points:
-#     print(point)
+    # print(point)
 # print("valid points:")
 # for point in valid:
-#     print(point)
+    # print(point)
 # print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
 i = 1
