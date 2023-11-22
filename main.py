@@ -89,7 +89,7 @@ class Grid:
     def is_solution(self, points: list):
         points.extend(self.points)
         
-        for point1, point2, point3 in it.combinations(chosen, 3):
+        for point1, point2, point3 in it.combinations(points, 3):
             if point1.onTheSameLine(point2, point3):
                 return False
         return True
