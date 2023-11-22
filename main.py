@@ -161,7 +161,7 @@ class Grid:
                                 
         return ValidPoints
     
-    def smart_brute_recursive_2D(self):
+    def find_only_2n_solutions(self):
         valid = self.getAllValidPoints()
         max_solutions = (list([self.points]), len(self.points))
         if len(self.points) == 0:
@@ -374,7 +374,7 @@ grid = Grid(n=n, d=2)
 # print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
 
-max = grid.smart_brute_recursive_2D()
+max = grid.find_only_2n_solutions()
 print('-------END RUN-------')
 print(f"brute force max solution for n = {grid.n}: {max}")
 i = 1
