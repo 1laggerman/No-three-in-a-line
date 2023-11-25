@@ -110,15 +110,17 @@ class Grid:
                 
     def getAllValidPoints(self, d: int = 2, z_layer: int = 0, chosen: list = list()):
         chosen.extend(self.points)
-
         ValidPoints = list()
-        for x in range(self.n):
-            for y in range(self.n):
-                if d == 2:
-                    if len(self.points) > 0:
-                        z = chosen[0].z
-                    else:
-                        z = z_layer
+        
+        for z in range(self.n):
+            for x in range(self.n):
+                for y in range(self.n):
+                    if d == 2:
+                        if len(self.points) > 0:
+                            z = chosen[0].z
+                        else:
+                            z = z_layer
+                            
                     thisPoint = Point(x, y, z)
                     
                     if len(chosen) == 0:
@@ -133,22 +135,47 @@ class Grid:
                                 pointValid = False
                         if pointValid:
                             ValidPoints.append(thisPoint)
-                elif d == 3:
-                    for z in range(self.n):
-                        thisPoint = Point(x, y, z)
                         
-                        if len(chosen) == 0:
-                            ValidPoints.append(thisPoint)
-                        elif len(chosen) == 1:
-                            if thisPoint != chosen[0]:
-                                ValidPoints.append(thisPoint)
-                        else:
-                            pointValid = True
-                            for point1, point2 in it.combinations(chosen, 2):
-                                if thisPoint.onTheSameLine(point1, point2):
-                                    pointValid = False
-                            if pointValid:
-                                ValidPoints.append(thisPoint)
+            if d == 2:
+                break
+            
+        # for x in range(self.n):
+        #     for y in range(self.n):
+        #         if d == 2:
+        #             if len(self.points) > 0:
+        #                 z = chosen[0].z
+        #             else:
+        #                 z = z_layer
+        #             thisPoint = Point(x, y, z)
+                    
+        #             if len(chosen) == 0:
+        #                 ValidPoints.append(thisPoint)
+        #             elif len(chosen) == 1:
+        #                 if thisPoint != chosen[0]:
+        #                     ValidPoints.append(thisPoint)
+        #             else:
+        #                 pointValid = True
+        #                 for point1, point2 in it.combinations(chosen, 2):
+        #                     if thisPoint.onTheSameLine(point1, point2):
+        #                         pointValid = False
+        #                 if pointValid:
+        #                     ValidPoints.append(thisPoint)
+        #         elif d == 3:
+        #             for z in range(self.n):
+        #                 thisPoint = Point(x, y, z)
+                        
+        #                 if len(chosen) == 0:
+        #                     ValidPoints.append(thisPoint)
+        #                 elif len(chosen) == 1:
+        #                     if thisPoint != chosen[0]:
+        #                         ValidPoints.append(thisPoint)
+        #                 else:
+        #                     pointValid = True
+        #                     for point1, point2 in it.combinations(chosen, 2):
+        #                         if thisPoint.onTheSameLine(point1, point2):
+        #                             pointValid = False
+        #                     if pointValid:
+        #                         ValidPoints.append(thisPoint)
                                 
         return ValidPoints
     
@@ -157,6 +184,17 @@ class Grid:
         max_solutions = (list([self.points]), len(self.points))
         if len(self.points) == 0:
             max_solutions = self.choose_2_Xpoints_recursive_from_valid(2 * self.n, 0, valid)
+        else:
+            print("ERROR!")
+        self.solutions = max_solutions[0]
+        
+        return len(self.solutions)
+    
+    def find_only_2n_solutions_3D(self):
+        valid = self.getAllValidPoints(d=3)
+        max_solutions = (list([self.points]), len(self.points))
+        if len(self.points) == 0:
+            max_solutions = self.choose_2_Xpoints_recursive_from_valid_3D(2 * self.n * self.n, (0, 0), valid)
         else:
             print("ERROR!")
         self.solutions = max_solutions[0]
@@ -178,38 +216,6 @@ class Grid:
                     self.union_solutions(current_max[0], t[0], current_max[1])
         else:
             t = self.choose_points_recursive(max)
-        self.solutions = current_max[0]
-        return (len(self.solutions), current_max[1])
-    
-    def brute_force_recursive_2D(self):
-        valid = self.getAllValidPoints()
-        current_max = (list([self.points]), len(self.points))
-        if len(self.points) == 0:
-            for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
-                t = self.choose_points_recursive(2 * self.n, list((point1, point2)))
-                if t[1] > current_max[1]:
-                    current_max = t
-                elif t[1] == current_max[1] or t[1] == 2 * self.n: # found another solution(at least one) with the same max
-                    self.union_solutions(current_max[0], t[0], current_max[1])
-                
-        else:
-            t = self.choose_points_recursive(2 * self.n)
-        self.solutions = current_max[0]
-        return (len(self.solutions), current_max[1])
-    
-    def brute_force_recursive_3D(self):
-        valid = self.getAllValidPoints(d = 3)
-        current_max = (list([self.points]), len(self.points))
-        if len(self.points) == 0:
-            for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
-                t = self.choose_points_recursive(2 * self.n * self.n, list((point1, point2)))
-                if t[1] > current_max[1]:
-                    current_max = t
-                elif t[1] == current_max[1] or t[1] == 2 * self.n: # found another solution(at least one) with the same max
-                    self.union_solutions(current_max[0], t[0], current_max[1])
-                
-        else:
-            t = self.choose_points_recursive(2 * self.n * self.n)
         self.solutions = current_max[0]
         return (len(self.solutions), current_max[1])
     
@@ -236,11 +242,11 @@ class Grid:
         for point in validPoints:
             # find sorted location by of 3-dimentional point:
             loc = 0
-            while loc < len(chosen_points) and point.x > chosen_points[loc].x:
+            while loc < len(chosen_points) and point.z > chosen_points[loc].z:
                 loc = loc + 1
-            while loc < len(chosen_points) and point.x == chosen_points[loc].x and point.y > chosen_points[loc].y:
+            while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x > chosen_points[loc].x:
                 loc = loc + 1
-            while loc < len(chosen_points) and point.x == chosen_points[loc].x and point.y == chosen_points[loc].y and point.z > chosen_points[loc].z:
+            while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x == chosen_points[loc].x and point.y > chosen_points[loc].y:
                 loc = loc + 1
             if loc == len(chosen_points):
                 chosen_points.append(point)
@@ -288,6 +294,38 @@ class Grid:
             chosen_points.pop()
         
         return current_max
+    
+    # def choose_2_Xpoints_recursive_from_valid_3D(self, max: int, taken_lines: tuple, validPoints: list, chosen_points: list = list()):
+    #     current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
+    #     if current_max[1] == max:
+    #         return current_max
+    #     elif len(validPoints) < 2:
+    #         if len(validPoints) == 1:
+    #             current_max[0][0].append(validPoints[0])
+    #         return current_max
+        
+    #     for i in range(len(validPoints)):
+    #         if validPoints[i].x != x:
+    #             break
+    #         chosen_points.append(validPoints[i])
+            
+    #         j = i + 1
+    #         while j < len(validPoints):
+    #             if validPoints[j].x != x:
+    #                 break
+    #             chosen_points.append(validPoints[j])
+    #             # call recursively to choose other points and get the max result:
+    #             new_valid = self.removeInValidPoints(validPoints[i], validPoints[j], validPoints.copy(), d=2, chosen=chosen_points)
+    #             t = self.choose_2_Xpoints_recursive_from_valid(max, x + 1, new_valid, chosen_points=chosen_points)
+    #             if t[1] > current_max[1]: # bigger max found, replace the old max
+    #                 current_max = t
+    #             elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
+    #                 self.union_solutions(current_max[0], t[0], current_max[1])
+    #             chosen_points.pop()
+    #             j = j + 1
+    #         chosen_points.pop()
+        
+    #     return current_max
         
     def draw_grid(self, solutionID: int = -1, axis: str ='off'):
         ticks = np.arange(0, self.n, 1)
@@ -363,7 +401,7 @@ class Grid:
         plt.show()
             
 
-grid = Grid(n=3, d=3)
+grid = Grid(n=2, d=3)
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 
