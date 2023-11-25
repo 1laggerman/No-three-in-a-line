@@ -84,30 +84,7 @@ class Grid:
             if point1.onTheSameLine(point2, point3):
                 return False
         return True
-            
-    def removeInValidPoints(self, added1: Point, added2: Point, valid: list, d: int = 2, chosen: list = list()):
-        valid.remove(added1)
-        valid.remove(added2)
-        
-        if added1.x == added2.x:
-            for i in range(self.n):
-                if i != added1.y and i != added2.y:
-                    try:
-                        valid.remove(Point(added1.x, i))
-                    except:
-                        pass
-                    
-         
-        for point1 in chosen:
-            if point1 != added1 and point1 != added2:
-                i = 0
-                while i < len(valid):
-                    if added1.onTheSameLine(point1, valid[i]) or added2.onTheSameLine(point1, valid[i]):
-                        valid.remove(valid[i])
-                        i = i - 1
-                    i = i + 1
-        return valid
-                
+    
     def getAllValidPoints(self, d: int = 2, z_layer: int = 0, chosen: list = list()):
         chosen.extend(self.points)
         ValidPoints = list()
@@ -138,70 +115,50 @@ class Grid:
                         
             if d == 2:
                 break
-            
-        # for x in range(self.n):
-        #     for y in range(self.n):
-        #         if d == 2:
-        #             if len(self.points) > 0:
-        #                 z = chosen[0].z
-        #             else:
-        #                 z = z_layer
-        #             thisPoint = Point(x, y, z)
-                    
-        #             if len(chosen) == 0:
-        #                 ValidPoints.append(thisPoint)
-        #             elif len(chosen) == 1:
-        #                 if thisPoint != chosen[0]:
-        #                     ValidPoints.append(thisPoint)
-        #             else:
-        #                 pointValid = True
-        #                 for point1, point2 in it.combinations(chosen, 2):
-        #                     if thisPoint.onTheSameLine(point1, point2):
-        #                         pointValid = False
-        #                 if pointValid:
-        #                     ValidPoints.append(thisPoint)
-        #         elif d == 3:
-        #             for z in range(self.n):
-        #                 thisPoint = Point(x, y, z)
-                        
-        #                 if len(chosen) == 0:
-        #                     ValidPoints.append(thisPoint)
-        #                 elif len(chosen) == 1:
-        #                     if thisPoint != chosen[0]:
-        #                         ValidPoints.append(thisPoint)
-        #                 else:
-        #                     pointValid = True
-        #                     for point1, point2 in it.combinations(chosen, 2):
-        #                         if thisPoint.onTheSameLine(point1, point2):
-        #                             pointValid = False
-        #                     if pointValid:
-        #                         ValidPoints.append(thisPoint)
                                 
         return ValidPoints
+            
+    def removeInValidPoints(self, added1: Point, added2: Point, valid: list, chosen: list = list()):
+        
+        if added1.x == added2.x and added1.z == added2.z:
+            for i in range(self.n):
+                try:
+                    valid.remove(Point(added1.x, i, added1.z))
+                except:
+                    pass
+                    
+         
+        for point1 in chosen:
+            if point1 != added1 and point1 != added2:
+                i = 0
+                while i < len(valid):
+                    if added1.onTheSameLine(point1, valid[i]) or added2.onTheSameLine(point1, valid[i]):
+                        valid.remove(valid[i])
+                        i = i - 1
+                    i = i + 1
+        return valid
     
-    def find_only_2n_solutions(self):
-        valid = self.getAllValidPoints()
+    def find_max_solutions(self):
+        max = 2 * self.n
+        if self.d == 3:
+            max = max * self.n            
+        valid = self.getAllValidPoints(d = self.d)
         max_solutions = (list([self.points]), len(self.points))
+        
         if len(self.points) == 0:
-            max_solutions = self.choose_2_Xpoints_recursive_from_valid(2 * self.n, 0, valid)
+            max_solutions = self.choose_2_Xpoints_recursive_from_valid(max, valid, 0, 0)
         else:
             print("ERROR!")
+            return (0, 0)
+        
+        if max_solutions[1] < max:
+            print("could not find max solution")
+            return (0, 0)
         self.solutions = max_solutions[0]
         
-        return len(self.solutions)
+        return (len(self.solutions), max_solutions[1])
     
-    def find_only_2n_solutions_3D(self):
-        valid = self.getAllValidPoints(d=3)
-        max_solutions = (list([self.points]), len(self.points))
-        if len(self.points) == 0:
-            max_solutions = self.choose_2_Xpoints_recursive_from_valid_3D(2 * self.n * self.n, (0, 0), valid)
-        else:
-            print("ERROR!")
-        self.solutions = max_solutions[0]
-        
-        return len(self.solutions)
-    
-    def brute_force_recursive(self):
+    def brute_force(self):
         max = 2 * self.n
         if self.d == 3:
             max = max * self.n
@@ -218,18 +175,6 @@ class Grid:
             t = self.choose_points_recursive(max)
         self.solutions = current_max[0]
         return (len(self.solutions), current_max[1])
-    
-    def union_solutions(self, set1: list, set2: list, length: int):
-        for solution1 in set1:
-            for solution2 in set2:
-                i = 0
-                while i < length and solution1[i] == solution2[i]:
-                    i = i + 1
-                if i == length:
-                    set2.remove(solution2)
-            
-        # add all valid solutions:
-        set1.extend(set2)
             
     def choose_points_recursive(self, max, chosen_points: list = list()):
         current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
@@ -263,7 +208,7 @@ class Grid:
         
         return current_max
     
-    def choose_2_Xpoints_recursive_from_valid(self, max: int, x: int, validPoints: list, chosen_points: list = list()):
+    def choose_2_Xpoints_recursive_from_valid(self, max: int, validPoints: list, x: int, z: int = 0, chosen_points: list = list()):
         current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
         if current_max[1] == max:
             return current_max
@@ -273,18 +218,21 @@ class Grid:
             return current_max
         
         for i in range(len(validPoints)):
-            if validPoints[i].x != x:
+            if validPoints[i].x != x or validPoints[i].z != z:
                 break
             chosen_points.append(validPoints[i])
             
             j = i + 1
             while j < len(validPoints):
-                if validPoints[j].x != x:
+                if validPoints[j].x != x or validPoints[j].z != z:
                     break
                 chosen_points.append(validPoints[j])
                 # call recursively to choose other points and get the max result:
-                new_valid = self.removeInValidPoints(validPoints[i], validPoints[j], validPoints.copy(), d=2, chosen=chosen_points)
-                t = self.choose_2_Xpoints_recursive_from_valid(max, x + 1, new_valid, chosen_points=chosen_points)
+                new_valid = self.removeInValidPoints(validPoints[i], validPoints[j], validPoints.copy(), chosen=chosen_points)
+                if x + 1 == self.n:
+                    x = -1
+                    z = z + 1
+                t = self.choose_2_Xpoints_recursive_from_valid(max, new_valid, x + 1, z, chosen_points=chosen_points)
                 if t[1] > current_max[1]: # bigger max found, replace the old max
                     current_max = t
                 elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
@@ -295,37 +243,17 @@ class Grid:
         
         return current_max
     
-    # def choose_2_Xpoints_recursive_from_valid_3D(self, max: int, taken_lines: tuple, validPoints: list, chosen_points: list = list()):
-    #     current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
-    #     if current_max[1] == max:
-    #         return current_max
-    #     elif len(validPoints) < 2:
-    #         if len(validPoints) == 1:
-    #             current_max[0][0].append(validPoints[0])
-    #         return current_max
-        
-    #     for i in range(len(validPoints)):
-    #         if validPoints[i].x != x:
-    #             break
-    #         chosen_points.append(validPoints[i])
+    def union_solutions(self, set1: list, set2: list, length: int):
+        for solution1 in set1:
+            for solution2 in set2:
+                i = 0
+                while i < length and solution1[i] == solution2[i]:
+                    i = i + 1
+                if i == length:
+                    set2.remove(solution2)
             
-    #         j = i + 1
-    #         while j < len(validPoints):
-    #             if validPoints[j].x != x:
-    #                 break
-    #             chosen_points.append(validPoints[j])
-    #             # call recursively to choose other points and get the max result:
-    #             new_valid = self.removeInValidPoints(validPoints[i], validPoints[j], validPoints.copy(), d=2, chosen=chosen_points)
-    #             t = self.choose_2_Xpoints_recursive_from_valid(max, x + 1, new_valid, chosen_points=chosen_points)
-    #             if t[1] > current_max[1]: # bigger max found, replace the old max
-    #                 current_max = t
-    #             elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
-    #                 self.union_solutions(current_max[0], t[0], current_max[1])
-    #             chosen_points.pop()
-    #             j = j + 1
-    #         chosen_points.pop()
-        
-    #     return current_max
+        # add all valid solutions:
+        set1.extend(set2)
         
     def draw_grid(self, solutionID: int = -1, axis: str ='off'):
         ticks = np.arange(0, self.n, 1)
@@ -401,7 +329,7 @@ class Grid:
         plt.show()
             
 
-grid = Grid(n=2, d=3)
+grid = Grid(n=3, d=2)
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 
@@ -425,8 +353,12 @@ grid = Grid(n=2, d=3)
 # print(f"number of valid points: {len(valid1)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
 
+# s1 = list([Point(0, 0, 0), Point(0, 1, 0), Point(1, 0, 0), Point(1, 2, 0), Point(2, 1, 0), Point(2, 2, 0), Point(0, 0, 1), Point(0, 1, 1)])
+# grid.add_points(s1)
+# grid.draw_grid()
 
-# valid = grid.getAllValidPoints(d=3, chosen=list([Point(0, 0, 0), Point(0, 0, 1)]))
+# valid = grid.getAllValidPoints(d=3, chosen=s1)
+# valid = grid.removeInValidPoints(added1=s1[6], added2=s1[7], valid=valid, chosen=s1)
 # print("points on grid: ")
 # # for point in grid.points:
 #     # print(point)
@@ -436,15 +368,16 @@ grid = Grid(n=2, d=3)
 # print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
 
-max = grid.brute_force_recursive()
+max = grid.find_max_solutions()
 print('-------END RUN-------')
-print(f"brute force found {max[0]} max solutions for n = {grid.n}: {max[1]}")
-i = 1
-for s in grid.solutions:
-    print(f'solution {i}')
-    for point in s:
-        print(point)
-    i = i + 1
+if max[0] > 0:
+    print(f"brute force found {max[0]} max solutions for n = {grid.n}, d = {grid.d} with {max[1]} points")
+    i = 1
+    for s in grid.solutions:
+        print(f'solution {i}')
+        for point in s:
+            print(point)
+        i = i + 1
 
-grid.draw_grid(0)
+    grid.draw_grid(0)
 
