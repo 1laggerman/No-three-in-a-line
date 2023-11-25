@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from enum import Enum
 import itertools as it
 
 class Point:
@@ -138,6 +137,75 @@ class Grid:
                     i = i + 1
         return valid
     
+    def order_2D_solutions(self):
+        xy_mat = np.zeros((self.n, self.n))
+        chosen = list()
+        chosen_id = list()
+        
+        i = 0
+        for s1 in self.solutions:
+            chosen_id.append(i)
+            for point in s1:
+                chosen.append(point)
+                xy_mat[point.x, point.y] = xy_mat[point.x, point.y] + 1
+                
+            j = 0
+            for s2 in self.solutions:
+                chosen_id.append(j)
+                for point in s2:
+                    point.z = 1
+                    chosen.append(point)
+                    xy_mat[point.x, point.y] = xy_mat[point.x, point.y] + 1
+                    
+                valid = self.getAllValidPoints(d=3, chosen=chosen)
+                max = self.choose_solution_recursive(chosen, chosen_id, xy_mat, 2, valid)
+                if max[1] == self.n:
+                    return max
+                j = j + 1
+            i = i + 1
+                    
+        return max
+    
+    def choose_solution_recursive(self, chosen: list, chosen_id: list, xy_mat: np.ndarray, z_layer: int, valid: list):
+        id = 0
+        for s1 in self.solutions:
+            s_points = list()
+            i = 0
+            j = 0
+            while (s1[i] == valid[j] or s[i] > valid[j]) and i < 2 * self.n:
+                if s[i] == valid[j]:
+                    s_points.append(s[i])
+                    i = i + 1
+                    j = j + 1
+                else:
+                    j = j + 1
+            if i == 2 * self.n: # solution is valid for current order
+                new_valid = self.reduce_solution_field(valid=valid.copy(), solution_added=s1, xy_matrix=xy_mat, chosen_id=chosen_id, z_layer=z_layer)
+                chosen_id.append(id)
+                t = self.choose_solution_recursive(chosen=s_points.extend(chosen), chosen_id=chosen_id, xy_mat=xy_mat, z_layer=z_layer + 1, valid=new_valid)
+                if t[1] > current_max[1]: # bigger max found, replace the old max
+                    current_max = t
+                chosen_id.remove(id)
+                
+            id = id + 1
+    
+    def reduce_solution_field(self, valid: list(), solution_added: list, xy_matrix: np.ndarray, chosen_id: list, z_layer: int):
+        while valid[0].z == z_layer:
+            xy_matrix[valid[0].x, valid[0].y] = xy_matrix[valid[0].x, valid[0].y] + 1
+            valid.remove(valid[0])
+            
+        for s_index in chosen_id:
+            if s_index < len(chosen_id - 2):    
+                for point1 in self.solutions[s_index]:
+                    for point2 in solution_added:
+                        i = 0
+                        while i < len(valid):
+                            if valid[i].onTheSameLine(point1, point2):
+                                valid.remove(valid[i])
+                                i = i - 1
+                            i = i + 1
+        return valid
+                    
     def find_max_solutions(self):
         max = 2 * self.n
         if self.d == 3:
@@ -329,7 +397,7 @@ class Grid:
         plt.show()
             
 
-grid = Grid(n=3, d=2)
+grid = Grid(n=2, d=3)
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 
