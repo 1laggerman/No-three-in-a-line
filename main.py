@@ -117,7 +117,7 @@ class Grid:
                                 
         return ValidPoints
             
-    def removeInValidPoints(self, added1: Point, added2: Point, valid: list, chosen: list = list()):
+    def remove2InValidPoints(self, added1: Point, added2: Point, valid: list, chosen: list = list()):
         
         if added1.x == added2.x and added1.z == added2.z:
             for i in range(self.n):
@@ -132,6 +132,17 @@ class Grid:
                 i = 0
                 while i < len(valid):
                     if added1.onTheSameLine(point1, valid[i]) or added2.onTheSameLine(point1, valid[i]):
+                        valid.remove(valid[i])
+                        i = i - 1
+                    i = i + 1
+        return valid
+    
+    def removeInValidPoints(self, added1: Point, valid: list, chosen: list = list()):
+        for point1 in chosen:
+            if point1 != added1:
+                i = 0
+                while i < len(valid):
+                    if added1.onTheSameLine(point1, valid[i]):
                         valid.remove(valid[i])
                         i = i - 1
                     i = i + 1
@@ -167,6 +178,10 @@ class Grid:
         return max
     
     def choose_solution_recursive(self, chosen: list, chosen_id: list, xy_mat: np.ndarray, z_layer: int, valid: list):
+        current_max = (chosen_id, z_layer)
+        if z_layer == self.n:
+            return current_max
+        
         id = 0
         for s1 in self.solutions:
             s_points = list()
@@ -185,9 +200,12 @@ class Grid:
                 t = self.choose_solution_recursive(chosen=s_points.extend(chosen), chosen_id=chosen_id, xy_mat=xy_mat, z_layer=z_layer + 1, valid=new_valid)
                 if t[1] > current_max[1]: # bigger max found, replace the old max
                     current_max = t
+                if current_max[1] == self.n:
+                    break
                 chosen_id.remove(id)
                 
             id = id + 1
+        return current_max
     
     def reduce_solution_field(self, valid: list(), solution_added: list, xy_matrix: np.ndarray, chosen_id: list, z_layer: int):
         while valid[0].z == z_layer:
@@ -221,7 +239,7 @@ class Grid:
         
         if max_solutions[1] < max:
             print("could not find max solution")
-            return (0, 0)
+            return max_solutions
         self.solutions = max_solutions[0]
         
         return (len(self.solutions), max_solutions[1])
@@ -234,22 +252,20 @@ class Grid:
         current_max = (list([self.points]), len(self.points))
         if len(self.points) == 0:
             for point1, point2 in it.combinations(valid, 2): # no point in choosing one and checking what is valid, everything is. this loop checks combinations of 2 points
-                t = self.choose_points_recursive(max, list((point1, point2)))
+                chosen = list([point1, point2])
+                t = self.choose_points_recursive(max, chosen, self.getAllValidPoints(d=self.d, chosen=chosen))
                 if t[1] > current_max[1]:
                     current_max = t
                 elif t[1] == current_max[1] or t[1] == 2 * self.n: # found another solution(at least one) with the same max
                     self.union_solutions(current_max[0], t[0], current_max[1])
         else:
-            t = self.choose_points_recursive(max)
+            current_max = self.choose_points_recursive(max, self.points.copy(), validPoints=valid)
         self.solutions = current_max[0]
         return (len(self.solutions), current_max[1])
             
-    def choose_points_recursive(self, max, chosen_points: list = list()):
-        current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
-        if current_max[1] == max:
-            return current_max
-        validPoints = self.getAllValidPoints(d=self.d, chosen=list.copy(chosen_points))
-        if len(validPoints) == 0:
+    def choose_points_recursive(self, max, chosen_points: list = list(), validPoints: list = list()):
+        current_max = (list([list.copy(chosen_points)]), len(chosen_points))
+        if current_max[1] == max or len(validPoints) == 0:
             return current_max
         
         for point in validPoints:
@@ -267,7 +283,8 @@ class Grid:
                 chosen_points.insert(loc, point)
             
             # call recursively to choose other points and get the max result:
-            t = self.choose_points_recursive(max, chosen_points=chosen_points)
+            new_valid = self.removeInValidPoints(point, validPoints.copy(), chosen=chosen_points)
+            t = self.choose_points_recursive(max, chosen_points=chosen_points, validPoints=new_valid)
             if t[1] > current_max[1]: # bigger max found, replace the old max
                 current_max = t
             elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
@@ -296,7 +313,7 @@ class Grid:
                     break
                 chosen_points.append(validPoints[j])
                 # call recursively to choose other points and get the max result:
-                new_valid = self.removeInValidPoints(validPoints[i], validPoints[j], validPoints.copy(), chosen=chosen_points)
+                new_valid = self.remove2InValidPoints(validPoints[i], validPoints[j], validPoints.copy(), chosen=chosen_points)
                 if x + 1 == self.n:
                     x = -1
                     z = z + 1
@@ -397,7 +414,8 @@ class Grid:
         plt.show()
             
 
-grid = Grid(n=2, d=3)
+grid = Grid(n=3, d=3)
+# grid.add_point(Point(1, 1))
 # grid.add_point(Point(0, 0))
 # grid.add_point(Point(1, 1))
 
@@ -435,17 +453,32 @@ grid = Grid(n=2, d=3)
 #     print(point)
 # print(f"number of valid points: {len(valid)}\ntotal number of points: {pow(grid.n, grid.d)}")
 
+# grid.draw_grid()
 
-max = grid.find_max_solutions()
+max = grid.brute_force()
+flag = False
+cs = -1
 print('-------END RUN-------')
 if max[0] > 0:
     print(f"brute force found {max[0]} max solutions for n = {grid.n}, d = {grid.d} with {max[1]} points")
     i = 1
+    c = Point(int(grid.n / 2), int(grid.n / 2))
     for s in grid.solutions:
         print(f'solution {i}')
         for point in s:
             print(point)
+            if point == Point(int(grid.n / 2), int(grid.n / 2)):
+                flag = True
+                cs = i
+                
         i = i + 1
+        
+    # print(c)
 
-    grid.draw_grid(0)
+    print(cs)
+    grid.draw_grid(cs - 1)
+    if flag == True:
+        print("a solution contains a center point")
+    else:
+        print("no solution contains a center point")
 
