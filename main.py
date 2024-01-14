@@ -27,6 +27,20 @@ class Point:
             return True
         return False
     
+    def __gt__(self, __other: "Point") -> bool:
+        if self.z != __other.z:
+            return self.z > __other.z
+        elif self.x != __other.x:
+            return self.x > __other.x
+        return self.y > __other.y
+    
+    def __ge__(self, __other: "Point") -> bool:
+        if self.z != __other.z:
+            return self.z > __other.z
+        if self.x != __other.x:
+            return self.x >= __other.x
+        return self.y >= __other.y
+    
     def __hash__(self) -> int:
         return self.x + (self.y * self.n) + (self.z * pow(self.n, 2))
     
@@ -122,18 +136,18 @@ class Grid:
                                 
         return ValidPoints
     
-    def removeInValidPoints_2n_new(self, chosen_points: list[Point], solution_added_id: int, valid_points: list[Point], isSolution: bool = True):
-        while self.solutions[solution_added_id][1][0].z == valid_points[0].z:
+    def removeInValidPoints_2n_new(self, chosen_points: list[Point], added_points: list[Point], z_layer: int, valid_points: list[Point], isSolution: bool = True):
+        while valid_points[0].z == z_layer:
             valid_points.pop(0)
             
-            for chosen_point in chosen_points:
-                for added_point in self.solutions[solution_added_id][1]:
-                    valid_index = 0
-                    while valid_index < valid_points.__len__():
-                        if valid_points[valid_index].onTheSameLine(chosen_point, added_point):
-                            valid_points.pop(valid_index)
-                            valid_index = valid_index - 1
-                        valid_index = valid_index + 1
+        for chosen_point in chosen_points:
+            for added_point in added_points: # not z acurate
+                valid_index = 0
+                while valid_index < valid_points.__len__():
+                    if valid_points[valid_index].onTheSameLine(chosen_point, added_point):
+                        valid_points.pop(valid_index)
+                        valid_index = valid_index - 1
+                    valid_index = valid_index + 1
                         
         return valid_points
             
@@ -170,7 +184,7 @@ class Grid:
     
     
     # 3D algorithms:
-    def order_2D_solutions(self, proba: float = 1, method = 'valid_ruduction'):
+    def order_2D_solutions(self, proba: float = 1, method = 'valid_points'):
         max = (list(), 0)
         valid_points = self.getAllValidPoints(d=3)
         while(valid_points[0].z == 0):
@@ -207,6 +221,9 @@ class Grid:
             # if (self.is_solution(chosen))
             return current_max
         
+        z_layer = chosen_solutions_ids.__len__()
+        new_valid_matrix = valid_matrix
+        
         for new_solution_id in valid_solutions_ids:
             
             # checking if new solution is valid and adding its points to a list 
@@ -217,8 +234,12 @@ class Grid:
                 for point in self.solutions[new_solution_id][1]:
                     new_valid_matrix[point.x, point.y] = new_valid_matrix[point.x, point.y] + 1
             if options[1] == True:
-                while i < 2 * self.n and (self.solutions[new_solution_id][1][i] >= valid_points[j]):
-                    if self.solutions[new_solution_id][1][i] == valid_points[j]:
+                added_points = copy.deepcopy(self.solutions[new_solution_id][1])
+                added_points[0].z = z_layer
+                while i < 2 * self.n and (added_points[i] >= valid_points[j]):
+                    if added_points[i] == valid_points[j]:
+                        if i + 1 < 2 * self.n:
+                            added_points[i + 1].z =  z_layer
                         i = i + 1
                         j = j + 1
                     else:
@@ -227,15 +248,12 @@ class Grid:
             if i == 2 * self.n or options[1] == False: # solution is valid for current order with options
                 new_valid_solutions = valid_solutions_ids
                 new_valid_points = valid_points
-                added_points = self.solutions[new_solution_id][1].copy()
+                
                 if options[0]:
                     new_valid_solutions = self.reduce_solution_field_by_validMat(valid_solutions_ids.copy(), new_valid_matrix)
                 
-                for i in range(2 * self.n):
-                    added_points[i].z =  chosen_solutions_ids.__len__()
-                
                 if options[1]:
-                    new_valid_points = self.removeInValidPoints_2n_new(chosen_points, added_points, valid_points.copy())
+                    new_valid_points = self.removeInValidPoints_2n_new(chosen_points, added_points, z_layer, valid_points.copy())
                 chosen_points.extend(added_points)
                         
                 # chosen_solutions_ids.append(new_solution_id)
@@ -487,7 +505,7 @@ def __main__():
     for index, solution in grid.solutions:
         print(index, solution)
         
-    solutions = grid.order_2D_solutions(1, method='valid_matrix')
+    solutions = grid.order_2D_solutions(1, method='valid_points')
     grid.d = 3
     print(solutions)
     points: list[Point] = list()
