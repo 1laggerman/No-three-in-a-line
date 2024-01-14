@@ -205,7 +205,6 @@ class Grid:
         if chosen_solutions_ids.__len__() == self.n:
             return current_max
         
-        id = 0
         for new_solution_id in valid_solutions_ids:
             
             # checking if new solution is valid and adding its points to a list 
@@ -246,8 +245,6 @@ class Grid:
                     for i in range(2 * self.n):
                         chosen_points.pop()
                 chosen_solutions_ids.pop()
-                
-            id = id + 1
         return current_max
     
     def reduce_solution_field_by_validMat(self, valid_solutions: list[int], valid_matrix: np.ndarray[int, int]):
