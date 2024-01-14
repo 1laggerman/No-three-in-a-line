@@ -212,8 +212,9 @@ class Grid:
             i = 0
             j = 0
             if options[0] == True:
+                new_valid_matrix = valid_matrix.copy()
                 for point in self.solutions[new_solution_id][1]:
-                    valid_matrix[point.x, point.y] = valid_matrix[point.x, point.y] + 1
+                    new_valid_matrix[point.x, point.y] = new_valid_matrix[point.x, point.y] + 1
             if options[1] == True:
                 while i < 2 * self.n and (self.solutions[new_solution_id][1][i] >= valid_points[j]):
                     if self.solutions[new_solution_id][1][i] == valid_points[j]:
@@ -225,10 +226,8 @@ class Grid:
             if i == 2 * self.n or options[1] == False: # solution is valid for current order with options
                 new_valid_solutions = valid_solutions_ids
                 new_valid_points = valid_points
-                new_valid_matrix = valid_matrix
                 if options[0]:
-                    new_valid_matrix = valid_matrix.copy()
-                    new_valid_solutions = self.reduce_solution_field_by_validMat(chosen_solutions_ids, new_solution_id, valid_solutions_ids.copy(), new_valid_matrix)
+                    new_valid_solutions = self.reduce_solution_field_by_validMat(valid_solutions_ids.copy(), new_valid_matrix)
                 if options[1]:
                     added_points = self.solutions[new_solution_id][1].copy()
                     for i in range(2 * self.n):
@@ -251,10 +250,7 @@ class Grid:
             id = id + 1
         return current_max
     
-    def reduce_solution_field_by_validMat(self, selected_solutions: list[int], added_solution: int, valid_solutions: list[int], valid_matrix: np.ndarray[int, int]):
-        for point in self.solutions[added_solution][1]:
-            valid_matrix[point.x, point.y] = valid_matrix[point.x, point.y] + 1
-        
+    def reduce_solution_field_by_validMat(self, valid_solutions: list[int], valid_matrix: np.ndarray[int, int]):
         index = 0
         while index in range(valid_solutions.__len__()):
             for point in self.solutions[valid_solutions[index]][1]:
@@ -264,26 +260,6 @@ class Grid:
                     break
             index = index + 1
         return valid_solutions
-            
-    # def reduce_solution_field_by_validPoints(self, selected_solutions: list[int], added_solution: int, valid_solutions: list[int], valid_points = list[Point]):
-    #     for point in valid_points
-            
-        
-    #     # while valid[0].z == z_layer:
-    #     #     xy_matrix[valid[0].x, valid[0].y] = xy_matrix[valid[0].x, valid[0].y] + 1
-    #     #     valid.remove(valid[0])
-            
-    #     # for s_index in chosen_id:
-    #     #     if s_index < len(chosen_id - 2):    
-    #     #         for point1 in self.solutions[s_index]:
-    #     #             for point2 in solution_added:
-    #     #                 i = 0
-    #     #                 while i < len(valid):
-    #     #                     if valid[i].onTheSameLine(point1, point2):
-    #     #                         valid.remove(valid[i])
-    #     #                         i = i - 1
-    #     #                     i = i + 1
-    #     return valid
 
     # 2D algorithms:
     def find_max_solutions_2D(self):
@@ -497,24 +473,10 @@ def __main__():
 
     grid.find_max_solutions_2D()
 
+    print('2D solutions:')
     for index, solution in grid.solutions:
         print(index, solution)
         
-    valid_mat = np.zeros((n, n))
-    chosen = list([0, 0])
-    for index in chosen:
-        for point in grid.solutions[index][1]:
-            valid_mat[point.x, point.y] = valid_mat[point.x, point.y] + 1
-    valid = list()
-    for index, solution in grid.solutions:
-        valid.append(index)
-    print(valid)
-    # valid_solutions = grid.reduce_solution_field_by_validMat(chosen, 2, )
-    valid_solutions = grid.reduce_solution_field_by_validMat(chosen, 0, valid.copy(), valid_mat.copy())
-    print('OG valid: ', valid)
-    print('OG mat:')
-    grid.print_grid_2D(mat=valid_mat)
-    print('returned valid: ', valid_solutions)
-    print(f'({valid_solutions.__len__()})')
+    grid.order_2D_solutions(1, method='valid_reduction')
     
 __main__()
