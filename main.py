@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools as it
 import random as rand
+import copy
 
 class Point:
     x = 0
@@ -121,9 +122,6 @@ class Grid:
                                 
         return ValidPoints
     
-    def solution_index(solution):
-        return solution[0]
-    
     def removeInValidPoints_2n_new(self, chosen_points: list[Point], solution_added_id: int, valid_points: list[Point], isSolution: bool = True):
         while self.solutions[solution_added_id][1][0].z == valid_points[0].z:
             valid_points.pop(0)
@@ -186,23 +184,27 @@ class Grid:
                 xy_mat[point.x, point.y] = 1
                 
             if method == 'valid_points':
-                t = self.choose_solution_recursive(list([solution[0]]), list(map(self.solution_index, self.solutions)), chosen, valid_points, xy_mat, (False, True))
+                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (False, True))
             elif method == 'valid_matrix':
-                t = self.choose_solution_recursive(list([solution[0]]), list(map(self.solution_index, self.solutions)), chosen, valid_points, xy_mat, (True, False))
-            elif method == 'valid_points+matrix':
-                t = self.choose_solution_recursive(list([solution[0]]), list(map(self.solution_index, self.solutions)), chosen, valid_points, xy_mat, (True, True))
+                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, False))
+            elif method == 'All':
+                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
             if t[1] == self.n:
                 print('found max :(')
                 return t
-            elif t[1] > max[1]:
+            if t[1] > max[1]:
                 max = t
+            elif t[1] == max[1]:
+                max[0].extend(t[0])
         
         return max
     
     # helper functions:
     def choose_solution_recursive(self, chosen_solutions_ids: list[int], valid_solutions_ids: list[int], chosen_points: list[Point], valid_points: list[Point] = list(), valid_matrix: np.ndarray = np.zeros((0, 0)), options: tuple[bool] = tuple([True, True])):
-        current_max = (chosen_solutions_ids, chosen_solutions_ids.__len__())
+        current_max = (list([chosen_solutions_ids]), chosen_solutions_ids.__len__())
         if chosen_solutions_ids.__len__() == self.n:
+            # self.points = chosen_points.copy()
+            # if (self.is_solution(chosen))
             return current_max
         
         for new_solution_id in valid_solutions_ids:
@@ -225,26 +227,34 @@ class Grid:
             if i == 2 * self.n or options[1] == False: # solution is valid for current order with options
                 new_valid_solutions = valid_solutions_ids
                 new_valid_points = valid_points
+                added_points = self.solutions[new_solution_id][1].copy()
                 if options[0]:
                     new_valid_solutions = self.reduce_solution_field_by_validMat(valid_solutions_ids.copy(), new_valid_matrix)
+                
+                for i in range(2 * self.n):
+                    added_points[i].z =  chosen_solutions_ids.__len__()
+                
                 if options[1]:
-                    added_points = self.solutions[new_solution_id][1].copy()
-                    for i in range(2 * self.n):
-                        added_points[i].z =  chosen_solutions_ids.__len__()
                     new_valid_points = self.removeInValidPoints_2n_new(chosen_points, added_points, valid_points.copy())
-                    chosen_points.extend(added_points)
+                chosen_points.extend(added_points)
                         
-                chosen_solutions_ids.append(new_solution_id)
-                t = self.choose_solution_recursive(chosen_solutions_ids, new_valid_solutions, chosen_points, new_valid_points, new_valid_matrix, options)
+                # chosen_solutions_ids.append(new_solution_id)
+                new_chosen_solutions_ids = chosen_solutions_ids.copy()
+                new_chosen_solutions_ids.append(new_solution_id)
+                t = self.choose_solution_recursive(new_chosen_solutions_ids, new_valid_solutions, chosen_points, new_valid_points, new_valid_matrix, options)
                 if t[1] > current_max[1]: # bigger max found, replace the old max
                     current_max = t
+                elif t[1] == current_max[1]:
+                    current_max[0].extend(t[0])
+                    # self.union_solutions(current_max[0], t[0], current_max[1])
                 if current_max[1] == self.n: # max is at upper bound
+                    # self.points = chosen_points.copy()
                     break
                 
                 if options[1]:
                     for i in range(2 * self.n):
                         chosen_points.pop()
-                chosen_solutions_ids.pop()
+                # chosen_solutions_ids.pop()
         return current_max
     
     def reduce_solution_field_by_validMat(self, valid_solutions: list[int], valid_matrix: np.ndarray[int, int]):
@@ -389,7 +399,7 @@ class Grid:
             print(mat[self.n - i - 1, :])
         
     # Grid functions:
-    def draw_grid(self, solutionID: int = -1, axis: str ='off'):
+    def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off'):
         ticks = np.arange(0, self.n, 1)
         fig = plt.figure(figsize=(12, 10), dpi=80)
         if self.d == 2:
@@ -442,9 +452,12 @@ class Grid:
             
             for point in self.points: # paint all dots on grid
                 ax.scatter([point.x], [point.y], [point.z], color='black', s=250)
-            if solutionID != -1:
-                for point in self.solutions[solutionID]:
-                    ax.scatter([point.x], [point.y], [point.z], color='black', s=250)
+            if solutionID[0] != -1:
+                z = 0
+                for s in solutionID:
+                    for point in self.solutions[s][1]:
+                        ax.scatter([point.x], [point.y], [z], color='black', s=250)
+                    z = z + 1
             
         else:
             print('figure cannot be shown for %d dimentions'.format(self.d))
@@ -465,7 +478,7 @@ class Grid:
 
 
 def __main__():
-    n = 5
+    n = 4
     grid = Grid(n=n, d=2)
 
     grid.find_max_solutions_2D()
@@ -474,6 +487,20 @@ def __main__():
     for index, solution in grid.solutions:
         print(index, solution)
         
-    grid.order_2D_solutions(1, method='valid_reduction')
+    solutions = grid.order_2D_solutions(1, method='valid_matrix')
+    grid.d = 3
+    print(solutions)
+    points: list[Point] = list()
+    index = 0
+    for s in solutions[0][0]:
+        bol = grid.solutions[s][1].copy()
+        for i in range(bol.__len__()):
+            bol[i].z = index
+        points.extend(copy.deepcopy(bol))
+        index = index + 1
+        
+    print(points)
+    grid.points = points
+    grid.draw_grid()
     
 __main__()
