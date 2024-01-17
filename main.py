@@ -95,7 +95,7 @@ class Grid:
         for point in points_arr:
             self.points.append(point)
             
-    def is_solution(self, points: list):
+    def is_solution(self, points: list[Point]):
         points.extend(self.points)
         
         for point1, point2, point3 in it.combinations(points, 3):
@@ -217,29 +217,33 @@ class Grid:
     def choose_solution_recursive(self, chosen_solutions_ids: list[int], valid_solutions_ids: list[int], chosen_points: list[Point], valid_points: list[Point] = list(), valid_matrix: np.ndarray = np.zeros((0, 0)), options: tuple[bool] = tuple([True, True])):
         current_max = (list([chosen_solutions_ids]), chosen_solutions_ids.__len__())
         if chosen_solutions_ids.__len__() == self.n:
-            # self.points = chosen_points.copy()
-            # if (self.is_solution(chosen))
+            if options[0] and not options[1]:
+                if self.is_solution(chosen_points):
+                    return current_max
+                else:
+                    return (list(), 0)
+            return current_max
+        elif valid_points.__len__() < 2 * self.n:
             return current_max
         
         z_layer = chosen_solutions_ids.__len__()
         new_valid_matrix = valid_matrix
         
         for new_solution_id in valid_solutions_ids:
+            added_points = copy.deepcopy(self.solutions[new_solution_id][1])
+            for point in added_points:
+                point.z = z_layer
             
             # checking if new solution is valid and adding its points to a list 
             i = 0
             j = 0
             if options[0] == True:
                 new_valid_matrix = valid_matrix.copy()
-                for point in self.solutions[new_solution_id][1]:
+                for point in added_points:
                     new_valid_matrix[point.x, point.y] = new_valid_matrix[point.x, point.y] + 1
             if options[1] == True:
-                added_points = copy.deepcopy(self.solutions[new_solution_id][1])
-                added_points[0].z = z_layer
                 while i < 2 * self.n and (added_points[i] >= valid_points[j]):
                     if added_points[i] == valid_points[j]:
-                        if i + 1 < 2 * self.n:
-                            added_points[i + 1].z =  z_layer
                         i = i + 1
                         j = j + 1
                     else:
@@ -505,20 +509,20 @@ def __main__():
     for index, solution in grid.solutions:
         print(index, solution)
         
-    solutions = grid.order_2D_solutions(1, method='valid_points')
+    solutions = grid.order_2D_solutions(1, method='All')
     grid.d = 3
     print(solutions)
-    points: list[Point] = list()
-    index = 0
-    for s in solutions[0][0]:
-        bol = grid.solutions[s][1].copy()
-        for i in range(bol.__len__()):
-            bol[i].z = index
-        points.extend(copy.deepcopy(bol))
-        index = index + 1
+    # points: list[Point] = list()
+    # index = 0
+    # for s in solutions[0][0]:
+    #     bol = grid.solutions[s][1].copy()
+    #     for i in range(bol.__len__()):
+    #         bol[i].z = index
+    #     points.extend(copy.deepcopy(bol))
+    #     index = index + 1
         
-    print(points)
-    grid.points = points
-    grid.draw_grid()
+    # print(points)
+    # grid.points = points
+    # grid.draw_grid()
     
 __main__()
