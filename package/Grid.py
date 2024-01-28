@@ -3,9 +3,11 @@ import numpy as np
 import itertools as it
 import copy
 from .Point import Point
+import functools
+import os
 
 from numba import jit, cuda
-from multiprocessing import Process
+import multiprocessing
 
 class Grid:
     points = list()
@@ -112,35 +114,49 @@ class Grid:
         return valid
     
     
+    def process_solution(self, solution, method, valid_points):
+        xy_mat = np.zeros((self.n, self.n))
+        chosen = [point for point in solution[1]]
+        for point in chosen:
+            xy_mat[point.x, point.y] = 1
+
+        if method == 'valid_points':
+            return self.choose_solution_recursive(
+                [solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (False, True)
+            )
+        elif method == 'valid_matrix':
+            return self.choose_solution_recursive([solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, False))
+        elif method == 'All':
+            return self.choose_solution_recursive([solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
+    
     # 3D algorithms:
-    def order_2D_solutions(self, proba: float = 1, method = 'valid_points'):
-        max = (list(), 0)
-        valid_points = self.getAllValidPoints(d=3)
-        while(valid_points[0].z == 0):
-            valid_points.pop(0)
-        
-        for solution in self.solutions:
-            xy_mat = np.zeros((self.n, self.n))
-            chosen = list()
-            for point in solution[1]:
-                chosen.append(point)
-                xy_mat[point.x, point.y] = 1
-                
-            if method == 'valid_points':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (False, True))
-            elif method == 'valid_matrix':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, False))
-            elif method == 'All':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
-            if t[1] == self.n:
-                print('found max :(')
-                return t
-            if t[1] > max[1]:
-                max = t
-            elif t[1] == max[1]:
-                max[0].extend(t[0])
-                  
-        return max
+    def order_2D_solutions(self, proba: float = 1, method='valid_points', cpu_process=(multiprocessing.cpu_count()/2) - 2):
+        if __name__ == '__main__' or __name__ == 'package.Grid':
+            max_result = (list(), 0)
+            valid_points = self.getAllValidPoints(d=3)
+            while valid_points[0].z == 0:
+                valid_points.pop(0)
+
+            partial_process_solution = functools.partial(self.process_solution, method=method, valid_points=valid_points)
+            
+            cpu_process = int(min(cpu_process, multiprocessing.cpu_count() / 2))
+            print(f'running as {cpu_process} process on {int(multiprocessing.cpu_count()/2)} cores')
+            with multiprocessing.Pool(processes=cpu_process) as pool:
+                results = pool.map(partial_process_solution, self.solutions)
+
+            for t in results:
+                if t[1] == self.n:
+                    print('found max :(')
+                    return t
+                if t[1] > max_result[1]:
+                    max_result = t
+                elif t[1] == max_result[1]:
+                    max_result[0].extend(t[0])
+
+            return max_result
+        else:
+            print('this doesnt work ', __name__)
+            return (list(), 0)
     
     # helper functions:
     def choose_solution_recursive(self, chosen_solutions_ids: list[int], valid_solutions_ids: list[int], chosen_points: list[Point], valid_points: list[Point] = list(), valid_matrix: np.ndarray = np.zeros((0, 0)), options: tuple[bool] = tuple([True, True])):
