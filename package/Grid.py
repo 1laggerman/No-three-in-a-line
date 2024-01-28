@@ -7,6 +7,7 @@ import functools
 import os
 
 from numba import jit, cuda
+import tensorflow as tf
 import multiprocessing
 
 class Grid:
@@ -138,24 +139,39 @@ class Grid:
                 valid_points.pop(0)
 
             partial_process_solution = functools.partial(self.process_solution, method=method, valid_points=valid_points)
-            
+
             cpu_process = int(min(cpu_process, multiprocessing.cpu_count() / 2))
-            print(f'running as {cpu_process} process on {int(multiprocessing.cpu_count()/2)} cores')
-            with multiprocessing.Pool(processes=cpu_process) as pool:
-                results = pool.map(partial_process_solution, self.solutions)
+            print(f'Running as {cpu_process} processes on {int(multiprocessing.cpu_count()/2)} cores')
 
-            for t in results:
-                if t[1] == self.n:
-                    print('found max :(')
-                    return t
-                if t[1] > max_result[1]:
-                    max_result = t
-                elif t[1] == max_result[1]:
-                    max_result[0].extend(t[0])
+            # Check if GPU is available
+            if tf.config.list_physical_devices('GPU'):
+                gpus = tf.config.experimental.list_physical_devices('GPU')
+                if gpus and len(gpus) > 1:
+                    strategy = tf.distribute.MirroredStrategy(devices=['/GPU:0', '/GPU:1'])  # Specify GPU devices
+                    print(f'Using {len(gpus)} GPUs')
+                else:
+                    strategy = tf.distribute.OneDeviceStrategy(device='/GPU:0' if gpus else '/CPU:0')
+                    print('Using CPU or single GPU')
+            else:
+                strategy = tf.distribute.OneDeviceStrategy(device='/CPU:0')
+                print('No GPU available. Using CPU.')
 
-            return max_result
+            with strategy.scope():
+                with multiprocessing.Pool(processes=cpu_process) as pool:
+                    results = pool.map(partial_process_solution, self.solutions)
+
+                for t in results:
+                    if t[1] == self.n:
+                        print('Found max :(')
+                        return t
+                    if t[1] > max_result[1]:
+                        max_result = t
+                    elif t[1] == max_result[1]:
+                        max_result[0].extend(t[0])
+
+                return max_result
         else:
-            print('this doesnt work ', __name__)
+            print('This does not work:', __name__)
             return (list(), 0)
     
     # helper functions:
