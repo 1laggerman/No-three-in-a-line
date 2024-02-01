@@ -3,7 +3,7 @@ import numpy as np
 import itertools as it
 import random as rand
 import copy
-from numba import jit, cuda
+# from numba import jit, cuda
 from timeit import default_timer as timer
 
 class Point:
@@ -225,7 +225,7 @@ class Grid:
         # add all valid solutions:
         set1.extend(set2)
 
-    @jit(forceobj=True)
+    # @jit(forceobj=True)
     def order_2D_solutions(self, proba: float = 1, method = 'valid_points'):
         
         print('flag 6')
@@ -258,7 +258,7 @@ class Grid:
         
         return max
 
-    @jit(forceobj=True)
+    # @jit(forceobj=True)
     def choose_solution_recursive(self, chosen_solutions_ids: list[int], valid_solutions_ids: list[int], chosen_points: list[Point], valid_points: list[Point] = list(), valid_matrix: np.ndarray = np.zeros((0, 0)), options: tuple[bool] = tuple([True, True])):
         return 0
 

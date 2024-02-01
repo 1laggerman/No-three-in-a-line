@@ -4,9 +4,8 @@ import itertools as it
 import copy
 from .Point import Point
 import functools
-import os
 
-from numba import jit, cuda
+# from numba import jit, cuda
 import tensorflow as tf
 import multiprocessing
 
@@ -68,12 +67,25 @@ class Grid:
                                 
         return ValidPoints
     
+    # TODO: integrate this generalized function version in the existing algorithms
+    def removeInValidPoints(self, chosen_points: list[Point], added_points: list[Point], valid_points: list[Point]):
+        for chosen_point in chosen_points:
+            for added_point in added_points:
+                valid_index = 0
+                while valid_index < valid_points.__len__():
+                    if valid_points[valid_index].onTheSameLine(chosen_point, added_point):
+                        valid_points.pop(valid_index)
+                        valid_index = valid_index - 1
+                    valid_index = valid_index + 1
+                        
+        return valid_points
+    
     def removeInValidPoints_2n_new(self, chosen_points: list[Point], added_points: list[Point], z_layer: int, valid_points: list[Point], isSolution: bool = True):
         while valid_points[0].z == z_layer:
             valid_points.pop(0)
             
         for chosen_point in chosen_points:
-            for added_point in added_points: # not z acurate
+            for added_point in added_points:
                 valid_index = 0
                 while valid_index < valid_points.__len__():
                     if valid_points[valid_index].onTheSameLine(chosen_point, added_point):
@@ -143,6 +155,7 @@ class Grid:
             cpu_process = int(min(cpu_process, multiprocessing.cpu_count() / 2))
             print(f'Running as {cpu_process} processes on {int(multiprocessing.cpu_count()/2)} cores')
 
+            # TODO - HOME: test if tensorflow recognizes and uses GPU to calculate
             # Check if GPU is available
             if tf.config.list_physical_devices('GPU'):
                 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -250,10 +263,9 @@ class Grid:
 
     # 2D algorithms:
     def find_max_solutions_2D(self):
-        max = 2 * self.n
-        if self.d == 3:
-            max = max * self.n            
-        valid = self.getAllValidPoints(d = self.d)
+        # TODO: integrate multiprocess approach to optimize run time of this algorithm
+        max = 2 * self.n           
+        valid = self.getAllValidPoints(d = 2)
         max_solutions = (list([self.points]), len(self.points))
         
         if len(self.points) == 0:
@@ -353,6 +365,13 @@ class Grid:
             chosen_points.pop()
         
         return current_max
+    
+    # TODO: implement choose points probabilisticly from valid points algorithm
+    # TODO: implement random greedy algorithm
+    # TODO: implement simulated annealing
+    # TODO: implement Mean Conflict
+    # TODO?: implement neural network(isnt this the other project on this issue? can they elapse?)
+    # TODO?: implement Matrix for lines(already did? reduce_solution_field_by_validMat())
         
     def print_grid_2D(self, solutionID: int = -1, mat: np.ndarray[int] = np.zeros((1, 1))):
         if mat.shape == (1, 1):
