@@ -1,11 +1,9 @@
 import random
 from timeit import default_timer as timer
 from package import Point, Grid
-import warnings
-warnings.filterwarnings("ignore", module="tensorflow")
 
 def __main__():
-    n = 5
+    n = 6
     grid = Grid(n=n, d=2)
 
     grid.find_max_solutions_2D()

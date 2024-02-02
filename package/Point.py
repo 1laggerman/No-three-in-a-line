@@ -10,6 +10,7 @@ class Point:
     
     def __str__(self) -> str:
         return f"({self.x}, {self.y}, {self.z})"
+    
     def __repr__(self):
         return str(self)
         
