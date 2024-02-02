@@ -5,10 +5,14 @@ import copy
 from .Point import Point
 import functools
 import os
+import warnings
 
-from numba import jit, cuda
+# from numba import jit, cuda
 import tensorflow as tf
 import multiprocessing
+
+# tf.get_logger().setLevel('ERROR')
+warnings.filterwarnings("ignore", module="tf")
 
 class Grid:
     points = list()
@@ -131,7 +135,7 @@ class Grid:
             return self.choose_solution_recursive([solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
     
     # 3D algorithms:
-    def order_2D_solutions(self, proba: float = 1, method='valid_points', cpu_process=(multiprocessing.cpu_count()/2) - 2):
+    def order_2D_solutions(self, proba: float = 1, method='valid_points', cpu_process=multiprocessing.cpu_count() - 4):
         if __name__ == '__main__' or __name__ == 'package.Grid':
             max_result = (list(), 0)
             valid_points = self.getAllValidPoints(d=3)
@@ -140,8 +144,8 @@ class Grid:
 
             partial_process_solution = functools.partial(self.process_solution, method=method, valid_points=valid_points)
 
-            cpu_process = int(min(cpu_process, multiprocessing.cpu_count() / 2))
-            print(f'Running as {cpu_process} processes on {int(multiprocessing.cpu_count()/2)} cores')
+            cpu_process = int(min(cpu_process, multiprocessing.cpu_count() - 2))
+            print(f'Running as {cpu_process} threads')
 
             # Check if GPU is available
             if tf.config.list_physical_devices('GPU'):
