@@ -71,11 +71,7 @@ class Grid:
             if d == 2:
                 break
                                 
-        return ValidPoints
-    
-    def pointsOnLine(self, point1, point2):
-        d = point1 - point2
-        
+        return ValidPoints  
     
     def removeInValidPoints(self, chosen_points: list[Point], added_points: list[Point], valid_points: list[Point]):
         invalid_points = []
