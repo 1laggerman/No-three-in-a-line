@@ -1,3 +1,6 @@
+from itertools import zip_longest
+import numpy as np
+
 class Point:
     x = 0
     y = 0
@@ -10,11 +13,21 @@ class Point:
     
     def __str__(self) -> str:
         return f"({self.x}, {self.y}, {self.z})"
+    
     def __repr__(self):
         return str(self)
         
     def __add__(self, __other: "Point"):
         return Point(self.x + __other.x, self.y + __other.y, self.z + __other.z)
+    
+    def __floordiv__(self, scalar):
+        return Point(int(self.x / scalar), int(self.y / scalar), int(self.z / scalar))
+        
+    def __truediv__(self, scalar):
+        return Point(self.x / scalar, self.y / scalar, self.z / scalar)
+    
+    def __sub__(self, __other: "Point"):
+        return Point(self.x - __other.x, self.y - __other.y, self.z - __other.z)
     
     def __eq__(self, __value: "Point") -> bool:
         if self.x == __value.x and self.y == __value.y and self.z == __value.z:
@@ -37,6 +50,13 @@ class Point:
     
     def __hash__(self) -> int:
         return self.x + (self.y * self.n) + (self.z * pow(self.n, 2))
+    
+    def get_max(self) -> int:
+        max = self.x
+        if self.y > max:
+            max = self.y
+        if self.z > max:
+            max = self.z
     
     def onTheSameLine(self, point2: "Point", point3: "Point"):
                 
@@ -71,3 +91,4 @@ class Point:
         if Mxz2 != Mxz3:
             return False
         return True
+    

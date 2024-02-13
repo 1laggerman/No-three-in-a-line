@@ -3,7 +3,16 @@ from timeit import default_timer as timer
 from package import Point, Grid
 
 def __main__():
-    n = 6
+    # order_solution_tester(6)
+    grid = Grid(n=10, d=2)
+    grid.find_max_solutions_2D()
+    grid.draw_grid(solutionID=[0])
+    
+    # grid.random_chooser_with_valid(1)
+    
+
+
+def order_solution_tester(n):
     grid = Grid(n=n, d=2)
 
     grid.find_max_solutions_2D()
@@ -15,20 +24,9 @@ def __main__():
     start = timer()
     solutions = grid.order_2D_solutions(1, method='All')
     time = timer() - start
-    print(time)
+    print('time to find order: ', time)
     grid.d = 3
     print(solutions)
-    # points: list[Point] = list()
-    # index = 0
-    # for s in solutions[0][0]:
-    #     bol = grid.solutions[s][1].copy()
-    #     for i in range(bol.__len__()):
-    #         bol[i].z = index
-    #     points.extend(copy.deepcopy(bol))
-    #     index = index + 1
-        
-    # print(points)
-    # grid.points = points
-    # grid.draw_grid()
     
-__main__()
+if __name__ == '__main__':
+    __main__()

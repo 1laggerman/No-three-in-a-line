@@ -1,11 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 import itertools as it
 import copy
+import random
 from .Point import Point
+import functools
+import warnings
 
-from numba import jit, cuda
-from multiprocessing import Process
+# from numba import jit, cuda
+import tensorflow as tf
+import multiprocessing
+
+# tf.get_logger().setLevel('ERROR')
+warnings.filterwarnings("ignore", module="tf")
 
 class Grid:
     points = list()
@@ -63,8 +71,26 @@ class Grid:
             if d == 2:
                 break
                                 
-        return ValidPoints
+        return ValidPoints  
     
+    def removeInValidPoints(self, chosen_points: list[Point], added_points: list[Point], valid_points: list[Point]):
+        invalid_points = []
+        for chosen_point in chosen_points:
+            for added_point in added_points:
+                d = chosen_point - added_point
+                d = d / math.gcd(d.x, d.y, d.z)
+                point = added_point + d
+                while (max(point.x, point.y, point.z) < self.n):
+                    invalid_points.append(point)
+                    point = point + d
+                point = point - d
+                while(min(point.x, point.y, point.z) > 0):
+                    invalid_points.insert(0, point)
+                    point = point - d
+        for point in invalid_points:
+            valid_points.remove(point)
+        return valid_points                
+                
     def removeInValidPoints_2n_new(self, chosen_points: list[Point], added_points: list[Point], z_layer: int, valid_points: list[Point], isSolution: bool = True):
         while valid_points[0].z == z_layer:
             valid_points.pop(0)
@@ -101,6 +127,7 @@ class Grid:
         return valid
     
     def removeInValidPoints_1_new(self, added1: Point, valid: list, chosen: list = list()):
+        # TODO: update algorithem
         for point1 in chosen:
             if point1 != added1:
                 i = 0
@@ -112,35 +139,64 @@ class Grid:
         return valid
     
     
+    def process_solution(self, solution, method, valid_points):
+        xy_mat = np.zeros((self.n, self.n))
+        chosen = [point for point in solution[1]]
+        for point in chosen:
+            xy_mat[point.x, point.y] = 1
+
+        if method == 'valid_points':
+            return self.choose_solution_recursive(
+                [solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (False, True)
+            )
+        elif method == 'valid_matrix':
+            return self.choose_solution_recursive([solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, False))
+        elif method == 'All':
+            return self.choose_solution_recursive([solution[0]], [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
+    
     # 3D algorithms:
-    def order_2D_solutions(self, proba: float = 1, method = 'valid_points'):
-        max = (list(), 0)
-        valid_points = self.getAllValidPoints(d=3)
-        while(valid_points[0].z == 0):
-            valid_points.pop(0)
-        
-        for solution in self.solutions:
-            xy_mat = np.zeros((self.n, self.n))
-            chosen = list()
-            for point in solution[1]:
-                chosen.append(point)
-                xy_mat[point.x, point.y] = 1
-                
-            if method == 'valid_points':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (False, True))
-            elif method == 'valid_matrix':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, False))
-            elif method == 'All':
-                t = self.choose_solution_recursive(list([solution[0]]), [index for index, _ in self.solutions], chosen, valid_points, xy_mat, (True, True))
-            if t[1] == self.n:
-                print('found max :(')
-                return t
-            if t[1] > max[1]:
-                max = t
-            elif t[1] == max[1]:
-                max[0].extend(t[0])
-                  
-        return max
+    def order_2D_solutions(self, proba: float = 1, method='valid_points', cpu_process=multiprocessing.cpu_count() - 4):
+        if __name__ == '__main__' or __name__ == 'package.Grid':
+            max_result = (list(), 0)
+            valid_points = self.getAllValidPoints(d=3)
+            while valid_points[0].z == 0:
+                valid_points.pop(0)
+
+            partial_process_solution = functools.partial(self.process_solution, method=method, valid_points=valid_points)
+
+            cpu_process = int(min(cpu_process, multiprocessing.cpu_count() - 2))
+            print(f'Running as {cpu_process} threads')
+
+            # Check if GPU is available
+            if tf.config.list_physical_devices('GPU'):
+                gpus = tf.config.experimental.list_physical_devices('GPU')
+                if gpus and len(gpus) > 1:
+                    strategy = tf.distribute.MirroredStrategy(devices=['/GPU:0', '/GPU:1'])  # Specify GPU devices
+                    print(f'Using {len(gpus)} GPUs')
+                else:
+                    strategy = tf.distribute.OneDeviceStrategy(device='/GPU:0' if gpus else '/CPU:0')
+                    print('Using CPU or single GPU')
+            else:
+                strategy = tf.distribute.OneDeviceStrategy(device='/CPU:0')
+                print('No GPU available. Using CPU.')
+
+            with strategy.scope():
+                with multiprocessing.Pool(processes=cpu_process) as pool:
+                    results = pool.map(partial_process_solution, self.solutions)
+
+                for t in results:
+                    if t[1] == self.n:
+                        print('Found max :(')
+                        return t
+                    if t[1] > max_result[1]:
+                        max_result = t
+                    elif t[1] == max_result[1]:
+                        max_result[0].extend(t[0])
+
+                return max_result
+        else:
+            print('This does not work:', __name__)
+            return (list(), 0)
     
     # helper functions:
     def choose_solution_recursive(self, chosen_solutions_ids: list[int], valid_solutions_ids: list[int], chosen_points: list[Point], valid_points: list[Point] = list(), valid_matrix: np.ndarray = np.zeros((0, 0)), options: tuple[bool] = tuple([True, True])):
@@ -255,37 +311,53 @@ class Grid:
             current_max = self.choose_points_recursive(max, self.points.copy(), validPoints=valid)
         self.solutions = list(enumerate(current_max[0]))
         return (len(self.solutions), current_max[1])
+    
+    def random_chooser_with_valid(self, proba=1):
+        max = 2 * self.n
+        if self.d == 3:
+            max = max * self.n
+        valid = self.getAllValidPoints(d=self.d)
+        current_max = self.choose_points_recursive(max, self.points.copy(), validPoints=valid, proba=min(proba, 1))
+        self.solutions = list(enumerate(current_max[0]))
+        return (len(self.solutions), current_max[1])
             
     # helper functions:
-    def choose_points_recursive(self, max, chosen_points: list = list(), validPoints: list = list()):
+    def choose_points_recursive(self, max, chosen_points: list = list(), validPoints: list = list(), proba=2):
         current_max = (list([list.copy(chosen_points)]), len(chosen_points))
         if current_max[1] == max or len(validPoints) == 0:
             return current_max
         
-        for point in validPoints:
-            # find sorted location by of 3-dimentional point:
-            loc = 0
-            while loc < len(chosen_points) and point.z > chosen_points[loc].z:
-                loc = loc + 1
-            while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x > chosen_points[loc].x:
-                loc = loc + 1
-            while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x == chosen_points[loc].x and point.y > chosen_points[loc].y:
-                loc = loc + 1
-            if loc == len(chosen_points):
-                chosen_points.append(point)
-            else:
-                chosen_points.insert(loc, point)
-            
-            # call recursively to choose other points and get the max result:
-            new_valid = self.removeInValidPoints_1_new(point, validPoints.copy(), chosen=chosen_points)
-            t = self.choose_points_recursive(max, chosen_points=chosen_points, validPoints=new_valid)
-            if t[1] > current_max[1]: # bigger max found, replace the old max
-                current_max = t
-            elif t[1] == current_max[1] or t[1] == max: # found another solution(at least one) with the same max
-                union_solutions(current_max[0], t[0], current_max[1])
-            chosen_points.remove(point)
+        point = random.choice(validPoints)
+        loc = 0
+        while loc < len(chosen_points) and point.z > chosen_points[loc].z:
+            loc = loc + 1
+        while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x > chosen_points[loc].x:
+            loc = loc + 1
+        while loc < len(chosen_points) and point.z == chosen_points[loc].z and point.x == chosen_points[loc].x and point.y > chosen_points[loc].y:
+            loc = loc + 1
+        if loc == len(chosen_points):
+            chosen_points.append(point)
+        else:
+            chosen_points.insert(loc, point)
+        
+        # call recursively
+        new_valid = self.removeInValidPoints_1_new(point, validPoints.copy(), chosen=chosen_points)
+        current_max = self.choose_points_recursive(max, chosen_points=chosen_points, validPoints=new_valid)
         
         return current_max
+    
+    def choose_2points_recursive_from_valid(self, max: int, validPoints: list, x: int, z: int = 0, chosen_points: list = list()):
+        current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
+        if current_max[1] == max:
+            return current_max
+        elif len(validPoints) < 2:
+            if len(validPoints) == 1:
+                current_max[0][0].append(validPoints[0])
+            return current_max
+        
+        
+        
+        
     
     def choose_2_Xpoints_recursive_from_valid(self, max: int, validPoints: list, x: int, z: int = 0, chosen_points: list = list()):
         current_max = (list([list.copy(chosen_points)]), len(chosen_points) + len(self.points))
@@ -353,15 +425,15 @@ class Grid:
         
         if self.d == 2:
             for x in range(self.n):
-                ax.plot([x, x], [0, self.n - 1], 'grey')
+                ax.plot([x, x], [0, self.n - 1], 'grey', zorder=0)
             for y in range(self.n):
                 ax.plot([0, self.n - 1], [y, y], 'grey')
 
             for point in self.points:
-                ax.scatter([point.x], [point.y], color='black', s=250)
-            if solutionID != -1:
-                for point in self.solutions[solutionID]:
-                    ax.scatter([point.x], [point.y], color='black', s=250)
+                ax.scatter([point.x], [point.y], c='red', edgecolors='black', s=500)
+            if solutionID[0] != -1:
+                for point in self.solutions[solutionID[0]][1]:
+                    ax.scatter([point.x], [point.y], c='red', edgecolors='black', s=1000, zorder=10)
             
         elif self.d == 3:
             # paint grid lines:
