@@ -1,6 +1,6 @@
 import unittest
 
-from package import PointG as Point
+from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
 
 # from package import Point
@@ -86,6 +86,21 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue(p3 < p2)
         self.assertTrue(p4 > p2)
         self.assertTrue(p3 < p4)
+        
+    def test_GetAllValidPoints(self):
+        g = Grid(2, 3)
+        VP = g.getAllValidPoints()
+        validPoints = [Point(0, 0, 0), Point(1, 0, 0), Point(0, 1, 0), Point(1, 1, 0)]
+        validPoints.extend([Point(0, 0, 1), Point(1, 0, 1), Point(0, 1, 1), Point(1, 1, 1)])
+        self.assertEqual(validPoints, VP)
+        
+    def test_removeInValidPoints(self):
+        g = Grid(3, 2)
+        vp = g.getAllValidPoints()
+        added = [Point(0, 0), Point(0, 1), Point(1, 0)]
+        new_vp = g.removeInValidPoints(added, vp)
+        valid_points = [Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 2)]
+        self.assertEqual(new_vp, valid_points)
         
 
 if __name__ == '__main__':

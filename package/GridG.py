@@ -3,6 +3,7 @@ import numpy as np
 import itertools as it
 import copy
 import math
+import random
 from .PointG import PointG as Point
 
 # from numba import jit, cuda
@@ -34,33 +35,57 @@ class GridG:
                 return False
         return True
     
-    def getAllValidPoints(self, d: int = 2, z_layer: int = 0, chosen: list = list()):
+    def getAllValidPoints(self, d: int = -1, chosen: list = list()):
         chosen.extend(self.points)
         ValidPoints: list[Point] = list()
-    
+        if d < 0:
+            d = self.d    
         for cords in it.product(range(self.n), repeat=d):
             ValidPoints.append(Point(*reversed(cords)))
                                 
         return ValidPoints
     
-    def removeInValidPoints(self, chosen_points: list[Point], added_points: list[Point], valid_points: list[Point]):
+    def removeInValidPoints(self, added_points: list[Point], valid_points: list[Point], chosen_points: list[Point] = list()):
         invalid_points = []
-        for chosen_point in chosen_points:
+        chosen = []
+        
+        if chosen_points.__len__() == 0:
+            chosen.append(added_points[0])
+            added_points.pop(0)
+        else:
+            chosen = chosen_points
+        
+        for chosen_point in chosen:
             for added_point in added_points:
                 d = chosen_point - added_point
                 d = d / math.gcd(*(d.cords))
-                point = added_point + d
-                while (point.max_cord() < self.n):
+                point = added_point
+                while (point.max_cord() < self.n and point.min_cord() >= 0):
                     invalid_points.append(point)
                     point = point + d
                 point = point - d
-                while(point.min_cord > 0):
+                while(point.max_cord() < self.n and point.min_cord() >= 0):
                     invalid_points.insert(0, point)
                     point = point - d
                     
         for point in invalid_points:
-            valid_points.remove(point)
+            try:
+                valid_points.remove(point)
+            except:
+                pass
         return valid_points
+    
+    
+    def random_greedy(self):
+        valid_points = self.getAllValidPoints()
+        chosen_points = []
+        while(valid_points.__len__() != 0):
+            added_point = random.choice(valid_points)
+            valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points)
+            chosen_points.append(added_point)
+        chosen_points.sort()
+        return (chosen_points, chosen_points.__len__())
+        
     
     def __str__(self):
         gridStr = '['

@@ -19,19 +19,19 @@ class PointG:
         return str(self)
         
     def __add__(self, __other: "PointG"):
-        return PointG(self.cords + __other.cords)
+        return PointG(*(self.cords + __other.cords))
     
     def mul(self, __other: "PointG"):
-        return PointG(self.cords * __other.cords)
+        return PointG(*(self.cords * __other.cords))
     
     def __matmul___(self, __other: "PointG"):
         return self.cords @ __other.cords
         
     def __truediv__(self, scalar):
-        return PointG(self.cords / scalar)
+        return PointG(*(self.cords / scalar))
     
     def __sub__(self, __other: "PointG"):
-        return PointG(self.cords - __other.cords)
+        return PointG(*(self.cords - __other.cords))
     
     def __eq__(self, __value: "PointG") -> bool:
         return np.all(self.cords == __value.cords)
