@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools as it
 import copy
-from .Point import Point
+from .PointG import PointG as Point
 
 # from numba import jit, cuda
 from multiprocessing import Process
 
-class Grid:
-    points = list()
+class GridG:
+    points: list[Point] = list()
     n = 1
     d = 2
     solutions: list[tuple[int, list[Point]]]
@@ -18,7 +18,8 @@ class Grid:
         self.d = d
         
     def add_point(self, p: Point):
-        self.points.append(p)
+        padding = max(0, self.n - p.cords.__len__())
+        self.points.append(Point(*np.pad(p.cords, (0, padding), mode='constant')))
         
     def add_points(self, points_arr: list):
         for point in points_arr:
@@ -35,33 +36,9 @@ class Grid:
     def getAllValidPoints(self, d: int = 2, z_layer: int = 0, chosen: list = list()):
         chosen.extend(self.points)
         ValidPoints: list[Point] = list()
-        
-        for z in range(self.n):
-            for x in range(self.n):
-                for y in range(self.n):
-                    if d == 2:
-                        if len(self.points) > 0:
-                            z = chosen[0].z
-                        else:
-                            z = z_layer
-                            
-                    thisPoint = Point(x, y, z)
-                    
-                    if len(chosen) == 0:
-                        ValidPoints.append(thisPoint)
-                    elif len(chosen) == 1:
-                        if thisPoint != chosen[0]:
-                            ValidPoints.append(thisPoint)
-                    else:
-                        pointValid = True
-                        for point1, point2 in it.combinations(chosen, 2):
-                            if thisPoint.onTheSameLine(point1, point2):
-                                pointValid = False
-                        if pointValid:
-                            ValidPoints.append(thisPoint)
-                        
-            if d == 2:
-                break
+    
+        for cords in it.product(range(self.n), repeat=d):
+            ValidPoints.append(Point(*reversed(cords)))
                                 
         return ValidPoints
     
@@ -321,6 +298,16 @@ class Grid:
             chosen_points.pop()
         
         return current_max
+    
+    def __str__(self):
+        gridStr = '['
+        i = 0
+        while i < self.points.__len__() - 1:
+            gridStr += self.points[i].__str__() + ', '
+            i = i + 1
+        gridStr += self.points[i].__str__() + ']'
+        return gridStr         
+            
         
     def print_grid_2D(self, solutionID: int = -1, mat: np.ndarray[int] = np.zeros((1, 1))):
         if mat.shape == (1, 1):
