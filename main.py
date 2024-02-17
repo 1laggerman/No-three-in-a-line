@@ -3,7 +3,7 @@ from timeit import default_timer as timer
 from package import Point, Grid
 
 def __main__():
-    # order_solution_tester(6)
+    # order_solution(6)
     grid = Grid(n=10, d=2)
     grid.find_max_solutions_2D()
     grid.draw_grid(solutionID=[0])
@@ -12,7 +12,7 @@ def __main__():
     
 
 
-def order_solution_tester(n):
+def order_solutions(n):
     grid = Grid(n=n, d=2)
 
     grid.find_max_solutions_2D()
