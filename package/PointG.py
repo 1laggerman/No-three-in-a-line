@@ -50,8 +50,11 @@ class PointG:
         key_index = np.max(eq)
         return self.cords[key_index] > __other.cords[key_index]
     
-    def get_max(self) -> int:
+    def max_cord(self) -> int:
         return np.max(self.cords)
+    
+    def min_cord(self) -> int:
+        return np.min(self.cords)
     
     def onTheSameLineFast(self, point2: "PointG", point3: "PointG"):
         v1 = point2.cords - self.cords
