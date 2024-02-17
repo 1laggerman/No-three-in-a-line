@@ -1,3 +1,5 @@
+import numpy as np
+
 class Point:
     x = 0
     y = 0
@@ -71,3 +73,58 @@ class Point:
         if Mxz2 != Mxz3:
             return False
         return True
+    
+class PointG:
+    cords = np.zeros(3, dtype=int)
+    def __init__(self, cordinents):
+        self.cords = np.array([x for x in cordinents])
+        
+    def __str__(self) -> str:
+        pointStr = '('
+        i = 0
+        while i < self.cords.__len__() - 1:
+            pointStr += f'{self.cords[i]}, '
+            i = i + 1
+        pointStr += f'{self.cords[i]})'
+    
+    def __repr__(self):
+        return str(self)
+        
+    def __add__(self, __other: "PointG"):
+        return PointG(self.cords + __other.cords)
+    
+    def mul(self, __other: "PointG"):
+        return PointG(self.cords * __other.cords)
+    
+    def __matmul___(self, __other: "PointG"):
+        return self.cords @ __other.cords
+        
+    def __truediv__(self, scalar):
+        return PointG(self.cords / scalar)
+    
+    def __sub__(self, __other: "PointG"):
+        return PointG(self.cords - __other.cords)
+    
+    def __eq__(self, __value: "PointG") -> bool:
+        return np.all(self.cords == __value.cords)
+    
+    def __gt__(self, __other: "PointG") -> bool:
+        eq = np.where(self.cords != __other.cords)[0]
+        if eq.__len__() == 0:
+            return False
+        key_index = np.max(eq)
+        return self.cords[key_index] > __other.cords[key_index]
+    
+    def __ge__(self, __other: "Point") -> bool:
+        eq = np.where(self.cords != __other.cords)[0]
+        if eq.__len__() == 0:
+            return True
+        key_index = np.max(eq)
+        return self.cords[key_index] > __other.cords[key_index]
+    
+    def get_max(self) -> int:
+        return np.max(self.cords)
+    
+    # def onTheSameLine(self, point2: "PointG", point3: "PointG"):
+        
+    
