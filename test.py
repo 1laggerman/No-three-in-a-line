@@ -1,10 +1,19 @@
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 from package.GridG import GridG as Grid
 
-n = np.array([-4, 8, 12])
-print(math.gcd(*n))
+# n = np.array([-4, 8, 12])
+# print(math.gcd(*n))
+solutions = []
 
-g = Grid(3, 2)
-solution = g.random_greedy()
-print(solution)
+for i in range(18):
+    g = Grid(i + 2, 2)
+    s = g.random_greedy()
+    solutions.append(s[1])
+    
+# print(solutions)
+plt.plot(solutions)
+plt.axis([2, 6, 4, 36])
+plt.show()
+# print(s)

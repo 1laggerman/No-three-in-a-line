@@ -21,7 +21,7 @@ class GridG:
         
     def add_point(self, p: Point):
         padding = max(0, self.n - p.cords.__len__())
-        self.points.append(Point(*np.pad(p.cords, (0, padding), mode='constant')))
+        self.points.append(Point(*np.pad(p.cords, (0, padding), mode='constant'), n=self.n))
         
     def add_points(self, points_arr: list):
         for point in points_arr:
@@ -37,16 +37,16 @@ class GridG:
     
     def getAllValidPoints(self, d: int = -1, chosen: list = list()):
         chosen.extend(self.points)
-        ValidPoints: list[Point] = list()
+        ValidPoints: set[Point] = set()
         if d < 0:
             d = self.d    
         for cords in it.product(range(self.n), repeat=d):
-            ValidPoints.append(Point(*reversed(cords)))
+            ValidPoints.add(Point(*reversed(cords), n=self.n))
                                 
         return ValidPoints
     
     def removeInValidPoints(self, added_points: list[Point], valid_points: list[Point], chosen_points: list[Point] = list()):
-        invalid_points = []
+        invalid_points = set()
         chosen = []
         
         if chosen_points.__len__() == 0:
@@ -61,18 +61,14 @@ class GridG:
                 d = d / math.gcd(*(d.cords))
                 point = added_point
                 while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.append(point)
+                    invalid_points.add(point)
                     point = point + d
-                point = point - d
+                point = added_point - d
                 while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.insert(0, point)
+                    invalid_points.add(point)
                     point = point - d
                     
-        for point in invalid_points:
-            try:
-                valid_points.remove(point)
-            except:
-                pass
+        valid_points = [x for x in valid_points if x not in invalid_points]
         return valid_points
     
     

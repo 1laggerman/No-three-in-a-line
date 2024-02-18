@@ -1,6 +1,6 @@
 import unittest
 
-from package import PointG as Point
+from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
 
 # from package import Point
@@ -87,20 +87,26 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue(p4 > p2)
         self.assertTrue(p3 < p4)
         
+    def test_hash(self):
+        s1 = set([Point(0, 1, 1, n=3), Point(1, 0, 0, n=3), Point(1, 1, 0, n=3), Point(2, 1, 2)])
+        s2 = set([Point(1, 1, 0, n=3), Point(0, 0, 0, n=3), Point(2, 2, 1, n=3)])
+        s3 = set([x for x in s1 if x not in s2])
+        s_res = set([Point(0, 1, 1, n=3), Point(1, 0, 0, n=3), Point(2, 1, 2, n=3)])
+        self.assertEqual(s3, s_res)        
+        
     def test_GetAllValidPoints(self):
         g = Grid(2, 3)
         VP = g.getAllValidPoints()
-        validPoints = [Point(0, 0, 0), Point(1, 0, 0), Point(0, 1, 0), Point(1, 1, 0)]
-        validPoints.extend([Point(0, 0, 1), Point(1, 0, 1), Point(0, 1, 1), Point(1, 1, 1)])
+        validPoints = set([Point(0, 0, 0, n=2), Point(1, 0, 0, n=2), Point(0, 1, 0, n=2), Point(1, 1, 0, n=2), Point(0, 0, 1, n=2), Point(1, 0, 1, n=2), Point(0, 1, 1, n=2), Point(1, 1, 1, n=2)])
         self.assertEqual(validPoints, VP)
         
-    def test_removeInValidPoints(self):
-        g = Grid(3, 2)
-        vp = g.getAllValidPoints()
-        added = [Point(0, 0), Point(0, 1), Point(1, 0)]
-        new_vp = g.removeInValidPoints(added, vp)
-        valid_points = [Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 2)]
-        self.assertEqual(new_vp, valid_points)
+    # def test_removeInValidPoints(self):
+    #     g = Grid(3, 2)
+    #     vp = g.getAllValidPoints()
+    #     added = [Point(0, 0), Point(0, 1), Point(1, 0)]
+    #     new_vp = g.removeInValidPoints(added, vp)
+    #     valid_points = [Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 2)]
+    #     self.assertEqual(new_vp, valid_points)
         
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 import random
 from timeit import default_timer as timer
-from package import Point, Grid
+from package import PointG, GridG as Point, Grid
 
 def __main__():
     # order_solution(6)

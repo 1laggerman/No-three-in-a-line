@@ -3,8 +3,9 @@ import numpy as np
 class PointG:
     cords = np.zeros(3, dtype=int)
     
-    def __init__(self, *cordinents):
-        self.cords = np.array([x for x in cordinents])
+    def __init__(self, *coordinates: int, n: int = 3):
+        self.cords = np.array([x for x in coordinates])
+        self.n = n # this is for hashing porposes
         
     def __str__(self) -> str:
         pointStr = '('
@@ -33,8 +34,17 @@ class PointG:
     def __sub__(self, __other: "PointG"):
         return PointG(*(self.cords - __other.cords))
     
-    def __eq__(self, __value: "PointG") -> bool:
-        return np.all(self.cords == __value.cords)
+    def __hash__(self) -> int:
+        a = 1
+        s = 0
+        for i in range(self.cords.__len__()):
+            s += a * self.cords[i]
+            a *= self.n
+            
+        return int(s)
+        
+    def __eq__(self, value: "PointG") -> bool:
+        return np.all(self.cords == value.cords)
     
     def __gt__(self, __other: "PointG") -> bool:
         eq = np.where(self.cords != __other.cords)[0]
