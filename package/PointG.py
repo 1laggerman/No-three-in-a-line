@@ -31,6 +31,9 @@ class PointG:
     def __truediv__(self, scalar):
         return PointG(*(self.cords / scalar))
     
+    def __floordiv__(self, scalar):
+        return PointG(*(self.cords // scalar))
+    
     def __sub__(self, __other: "PointG"):
         return PointG(*(self.cords - __other.cords))
     

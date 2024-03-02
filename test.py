@@ -1,19 +1,17 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
+from package.statistics import graph_avg, graph_cmpr
 
-# n = np.array([-4, 8, 12])
-# print(math.gcd(*n))
-solutions = []
 
-for i in range(18):
-    g = Grid(i + 2, 2)
-    s = g.random_greedy()
-    solutions.append(s[1])
-    
-# print(solutions)
-plt.plot(solutions)
-plt.axis([2, 6, 4, 36])
-plt.show()
-# print(s)
+from package.validPointsStruct import validPoints
+
+n = 3
+d = 4
+
+g = Grid(n=n, d=d)
+# print("max: ", int(2 * math.pow(n, d - 1)), "points")
+# print(g.random_greedy())
+graph_cmpr(Grid.random_greedy, iters = 10, rg=range(3, 7), base=3)

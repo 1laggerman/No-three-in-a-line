@@ -3,6 +3,8 @@ import unittest
 from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
 
+from package.validPointsStruct import validPoints
+
 # from package import Point
 # from package import Grid
 
@@ -99,7 +101,22 @@ class TestStringMethods(unittest.TestCase):
         VP = g.getAllValidPoints()
         validPoints = set([Point(0, 0, 0, n=2), Point(1, 0, 0, n=2), Point(0, 1, 0, n=2), Point(1, 1, 0, n=2), Point(0, 0, 1, n=2), Point(1, 0, 1, n=2), Point(0, 1, 1, n=2), Point(1, 1, 1, n=2)])
         self.assertEqual(validPoints, VP)
+    
+    
+    def test_validPointStruct(self):
+        g = Grid(2, 3)
+        VP = validPoints(g.getAllValidPoints(), 2, 3)
         
+        VP.remove(Point(0, 0))
+        VP.remove(Point(2, 2))
+        VP.remove(Point(1, 1))
+        # [(1, 2), (1, 0), (2, 0), (0, 1), (0, 2), (2, 1)]
+        # [[-1  3  4]
+        #  [ 1 -1  0]
+        #  [ 2  5 -1]]
+        valid_points = validPoints([])
+        
+    
     # def test_removeInValidPoints(self):
     #     g = Grid(3, 2)
     #     vp = g.getAllValidPoints()

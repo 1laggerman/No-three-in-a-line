@@ -1,3 +1,4 @@
+from typing import Callable
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools as it
@@ -5,6 +6,8 @@ import copy
 import math
 import random
 from .PointG import PointG as Point
+from .validPointsStruct import validPoints
+# from package.validPointsStruct import randomSet
 
 # from numba import jit, cuda
 from multiprocessing import Process
@@ -37,49 +40,55 @@ class GridG:
     
     def getAllValidPoints(self, d: int = -1, chosen: list = list()):
         chosen.extend(self.points)
-        ValidPoints: set[Point] = set()
+        ValidPoints: list[Point] = list()
         if d < 0:
             d = self.d    
         for cords in it.product(range(self.n), repeat=d):
-            ValidPoints.add(Point(*reversed(cords), n=self.n))
+            ValidPoints.append(Point(*reversed(cords), n=self.n))
                                 
         return ValidPoints
     
-    def removeInValidPoints(self, added_points: list[Point], valid_points: list[Point], chosen_points: list[Point] = list()):
-        invalid_points = set()
+    def removeInValidPoints(self, added_points: list[Point], valid_points: validPoints, chosen_points: list[Point] = []):
+        invalid_points: list[Point] = list()
         chosen = []
         
         if chosen_points.__len__() == 0:
-            chosen.append(added_points[0])
-            added_points.pop(0)
+            chosen.append(added_points[-1])
+            invalid_points.append(added_points.pop())
         else:
             chosen = chosen_points
         
         for chosen_point in chosen:
             for added_point in added_points:
                 d = chosen_point - added_point
-                d = d / math.gcd(*(d.cords))
+                d = d // math.gcd(*(d.cords))
+                
                 point = added_point
                 while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.add(point)
+                    invalid_points.append(point)
                     point = point + d
                 point = added_point - d
                 while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.add(point)
+                    invalid_points.append(point)
                     point = point - d
                     
-        valid_points = [x for x in valid_points if x not in invalid_points]
+        for point in invalid_points:
+            try:
+                valid_points.remove(point)
+            except IndexError:
+                pass
         return valid_points
     
     
     def random_greedy(self):
-        valid_points = self.getAllValidPoints()
+        valid_points = validPoints(self.getAllValidPoints(), self.n, self.d)
+        
         chosen_points = []
         while(valid_points.__len__() != 0):
-            added_point = random.choice(valid_points)
+            added_point = valid_points.random_choice()
             valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points)
             chosen_points.append(added_point)
-        chosen_points.sort()
+        # chosen_points.sort()
         return (chosen_points, chosen_points.__len__())
         
     
@@ -90,8 +99,7 @@ class GridG:
             gridStr += self.points[i].__str__() + ', '
             i = i + 1
         gridStr += self.points[i].__str__() + ']'
-        return gridStr         
-            
+        return gridStr
         
     def print_grid_2D(self, solutionID: int = -1, mat: np.ndarray[int] = np.zeros((1, 1))):
         if mat.shape == (1, 1):
