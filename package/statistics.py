@@ -18,7 +18,7 @@ def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 
                     sum += s
                 results.append(sum / iters)
                 base.append(math.pow(n, d))
-                print(f"finished n={n}, d={d}: {sum}")
+                print(f"finished n={n}, d={d}: {sum / iters}")
             
         print("results\n", results)
         print("num of points: \n", base)
