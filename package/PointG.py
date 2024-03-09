@@ -1,11 +1,11 @@
 import numpy as np
 
 class PointG:
-    cords = np.zeros(3, dtype=int)
+    cords = np.ndarray
     
     def __init__(self, *coordinates: int, n: int = 3):
         self.cords = np.array([x for x in coordinates])
-        self.n = n # this is for hashing porposes
+        self.n = n # max value of coordinates, for hashing porposes
         
     def __str__(self) -> str:
         pointStr = '('
@@ -42,7 +42,7 @@ class PointG:
         s = 0
         for i in range(self.cords.__len__()):
             s += a * self.cords[i]
-            a *= self.n
+            a *= self.cords.shape[0]
             
         return int(s)
         
@@ -70,8 +70,8 @@ class PointG:
         return np.min(self.cords)
     
     def onTheSameLineFast(self, point2: "PointG", point3: "PointG"):
-        v1 = point2.cords - self.cords
-        v2 = point3.cords - self.cords
+        v1 = (point2 - self).cords
+        v2 = (point3 - self).cords
         angle = (v1 @ v2.transpose()) / (np.linalg.norm(v1) * np.linalg.norm(v2))
         return np.arccos(np.clip(np.abs(angle), -1, 1)) < 1e-10
     

@@ -14,4 +14,4 @@ d = 4
 g = Grid(n=n, d=d)
 # print("max: ", int(2 * math.pow(n, d - 1)), "points")
 # print(g.random_greedy())
-graph_avg(Grid.random_greedy, iters = 10, ns=range(3, 20), ds=range(3, 4))
+# graph_avg(Grid.random_greedy, iters = 10, ns=range(3, 5), ds=range(3, 4))

@@ -1,16 +1,13 @@
-from typing import Callable
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools as it
 import copy
 import math
 import random
+from multiprocessing import Process
 from .PointG import PointG as Point
 from .validPointsStruct import validPoints
-# from package.validPointsStruct import randomSet
 
-# from numba import jit, cuda
-from multiprocessing import Process
 
 class GridG:
     points: list[Point] = list()
@@ -80,7 +77,7 @@ class GridG:
         return valid_points
     
     
-    def random_greedy(self):
+    def random_greedy(self, sorted: bool = True):
         valid_points = validPoints(self.getAllValidPoints(), self.n, self.d)
         
         chosen_points = []
@@ -88,7 +85,8 @@ class GridG:
             added_point = valid_points.random_choice()
             valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points)
             chosen_points.append(added_point)
-        # chosen_points.sort()
+        if sorted:
+            chosen_points.sort()
         return (chosen_points, chosen_points.__len__())
         
     
