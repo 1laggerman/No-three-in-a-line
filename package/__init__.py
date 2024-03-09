@@ -4,5 +4,5 @@ from .Grid import Grid
 from .PointG import PointG
 from .GridG import GridG
 
-from .validPointsStruct import validPoints
+from .GridPointsStruct import GridPoints
 from .statistics import graph_avg

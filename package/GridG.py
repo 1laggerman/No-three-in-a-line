@@ -6,8 +6,7 @@ import math
 import random
 from multiprocessing import Process
 from .PointG import PointG as Point
-from .validPointsStruct import validPoints
-
+from .GridPointsStruct import GridPoints
 
 class GridG:
     points: list[Point] = list()
@@ -45,42 +44,53 @@ class GridG:
                                 
         return ValidPoints
     
-    def removeInValidPoints(self, added_points: list[Point], valid_points: validPoints, chosen_points: list[Point] = []):
-        invalid_points: list[Point] = list()
-        chosen = []
+    def removeInValidPoints(self, added_points: list[Point], valid_points: GridPoints, chosen_points: GridPoints = None, k_in_line: int = 2):
+        invalid_points = GridPoints.fromGrid([], self)
         
+        chosen = chosen_points
+        if chosen_points == None:
+            chosen = GridPoints.fromGrid([], self)
+            
         if chosen_points.__len__() == 0:
             chosen.append(added_points[-1])
             invalid_points.append(added_points.pop())
-        else:
-            chosen = chosen_points
-        
+            
+        added = GridPoints.fromGrid(added_points, self)
+        on_line = 0
         for chosen_point in chosen:
-            for added_point in added_points:
+            for added_point in added:
                 d = chosen_point - added_point
                 d = d // math.gcd(*(d.cords))
                 
                 point = added_point
                 while (point.max_cord() < self.n and point.min_cord() >= 0):
                     invalid_points.append(point)
+                    if point in added or point in chosen:
+                        on_line += 1
                     point = point + d
+                        
+                    
                 point = added_point - d
                 while(point.max_cord() < self.n and point.min_cord() >= 0):
                     invalid_points.append(point)
+                    if point in added or point in chosen:
+                        on_line += 1
                     point = point - d
                     
+        
         for point in invalid_points:
-            try:
-                valid_points.remove(point)
-            except IndexError:
-                pass
+            if on_line >= k_in_line:
+                try:
+                    valid_points.remove(point)
+                except IndexError:
+                    pass
         return valid_points
     
     
     def random_greedy(self, sorted: bool = True):
-        valid_points = validPoints(self.getAllValidPoints(), self.n, self.d)
+        valid_points = GridPoints.fromGrid(self.getAllValidPoints(), self)
         
-        chosen_points = []
+        chosen_points = GridPoints.fromGrid([], self)
         while(valid_points.__len__() != 0):
             added_point = valid_points.random_choice()
             valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points)
@@ -187,15 +197,3 @@ class GridG:
         # manager.full_screen_toggle()
         # ax.margins(0.02)
         plt.show()
-        
-def union_solutions(set1: list[Point], set2: list[Point], length: int):
-    for solution1 in set1:
-        for solution2 in set2:
-            i = 0
-            while i < length and solution1[i] == solution2[i]:
-                i = i + 1
-            if i == length:
-                set2.remove(solution2)
-        
-    # add all valid solutions:
-    set1.extend(set2)

@@ -1,20 +1,26 @@
 import random
 from .PointG import PointG as Point
+# from .GridG import GridG as Grid
+
 import numpy as np
 import copy
 
-class validPoints():
+class GridPoints():
     m: np.ndarray
     l: list[Point]
     
     def __init__(self, points: list[Point], n: int, d: int): # O(n * d)
-        self.m = np.zeros((n,) * d, dtype=int)
+        self.m = np.full((n,) * d, fill_value=-1, dtype=int)
         i = 0
         for point in points:
             self.m[tuple(point.cords)] = i
             i += 1
         
         self.l = copy.deepcopy(points)
+            
+    @classmethod
+    def fromGrid(cls, points: list[Point], grid):
+        return cls(points, grid.n, grid.d)
         
     def __len__(self):
         return self.l.__len__()
@@ -37,6 +43,8 @@ class validPoints():
         return self.l[self.m[tuple(key.cords)]] == key
     
     def append(self, __other: Point): # O(d)
+        if __other in self:
+            return
         self.m[tuple(__other.cords)] = self.l.__le__()
         self.l.append(__other)
     
@@ -46,5 +54,9 @@ class validPoints():
     def __repr__(self) -> str:
         return str(self)
     
+    def __eq__(self, __value: "GridPoints") -> bool:
+        return np.all(self.m == __value.m)
     
-        
+    def __iter__(self):
+        return iter(self.l)
+    

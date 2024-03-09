@@ -3,7 +3,7 @@ import unittest
 from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
 
-from package.validPointsStruct import validPoints
+from package.GridPointsStruct import GridPoints
 
 class TestStringify(unittest.TestCase):
 
@@ -106,21 +106,19 @@ class TestValidPoints(unittest.TestCase):
         g = Grid(2, 3)
         VP = g.getAllValidPoints()
         valid_points = [Point(0, 0, 0), Point(1, 0, 0), Point(0, 1, 0), Point(1, 1, 0), Point(0, 0, 1), Point(1, 0, 1), Point(0, 1, 1), Point(1, 1, 1)]
-        self.assertEqual(validPoints, VP)
+        self.assertCountEqual(valid_points, VP)
     
     
     def test_validPointStruct(self):
-        g = Grid(2, 3)
-        VP = validPoints(g.getAllValidPoints(), 2, 3)
+        g = Grid(3, 2)
+        VP = GridPoints(g.getAllValidPoints(), 3, 2)
         
         VP.remove(Point(0, 0))
         VP.remove(Point(2, 2))
         VP.remove(Point(1, 1))
-        # [(1, 2), (1, 0), (2, 0), (0, 1), (0, 2), (2, 1)]
-        # [[-1  3  4]
-        #  [ 1 -1  0]
-        #  [ 2  5 -1]]
-        valid_points = validPoints([])
+        
+        valid_points = GridPoints([Point(1, 2), Point(1, 0), Point(2, 0), Point(0, 1), Point(0, 2), Point(2, 1)], 3, 2)
+        self.assertEqual(valid_points, VP)
 
 if __name__ == '__main__':
     unittest.main()
