@@ -48,52 +48,63 @@ class GridG:
         invalid_points = GridPoints.fromGrid([], self)
         
         chosen = chosen_points
-        if chosen_points == None:
+        if chosen_points is None:
             chosen = GridPoints.fromGrid([], self)
             
         if chosen_points.__len__() == 0:
             chosen.append(added_points[-1])
-            invalid_points.append(added_points.pop())
+            valid_points.remove(added_points.pop())
+            # invalid_points.append(added_points.pop())
             
         added = GridPoints.fromGrid(added_points, self)
-        on_line = 0
         for chosen_point in chosen:
             for added_point in added:
                 d = chosen_point - added_point
                 d = d // math.gcd(*(d.cords))
                 
-                point = added_point
+                on_line = 1
+                point = added_point + d
                 while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.append(point)
-                    if point in added or point in chosen:
+                    if point in chosen or point in added:
                         on_line += 1
+                    else:
+                        invalid_points.append(point)
                     point = point + d
                         
                     
                 point = added_point - d
                 while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    invalid_points.append(point)
-                    if point in added or point in chosen:
+                    if point in chosen or point in added:
                         on_line += 1
+                    else:
+                        invalid_points.append(point)
                     point = point - d
                     
+                if on_line >= k_in_line:
+                    for point in invalid_points:
+                        try:
+                            valid_points.remove(point)
+                        except IndexError:
+                            pass
+                invalid_points = []
         
-        for point in invalid_points:
-            if on_line >= k_in_line:
-                try:
-                    valid_points.remove(point)
-                except IndexError:
-                    pass
+        for point in added:
+            try:
+                valid_points.remove(point)
+            except IndexError:
+                pass
+                
+        
         return valid_points
     
     
-    def random_greedy(self, sorted: bool = True):
+    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2):
         valid_points = GridPoints.fromGrid(self.getAllValidPoints(), self)
         
         chosen_points = GridPoints.fromGrid([], self)
         while(valid_points.__len__() != 0):
             added_point = valid_points.random_choice()
-            valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points)
+            valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=allowed_in_line)
             chosen_points.append(added_point)
         if sorted:
             chosen_points.sort()

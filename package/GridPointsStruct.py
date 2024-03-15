@@ -34,19 +34,19 @@ class GridPoints():
         if list_idx == -1:
             raise IndexError()
         
-        self.m[mat_idx] = -1
         self.l[list_idx] = self.l[-1]
         self.m[tuple(self.l[-1].cords)] = list_idx
+        self.m[mat_idx] = -1
         self.l.pop()
         
     def __contains__(self, key: Point): # O(d)
-        return self.l[self.m[tuple(key.cords)]] == key
+        return self.m[tuple(key.cords)] != -1
     
-    def append(self, __other: Point): # O(d)
-        if __other in self:
+    def append(self, other: Point): # O(d)
+        if other in self:
             return
-        self.m[tuple(__other.cords)] = self.l.__le__()
-        self.l.append(__other)
+        self.m[tuple(other.cords)] = self.l.__len__()
+        self.l.append(other)
     
     def __str__(self):
         return self.l.__str__() + "\n" + self.m.__str__()
