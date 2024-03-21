@@ -109,6 +109,10 @@ class GridG:
         if sorted:
             chosen_points.sort()
         return (chosen_points, chosen_points.__len__())
+
+    def min_comflict(self, max_iters: int = 10, sorted: bool = False, max_in_line: int = 2):
+        points, len_p = self.random_greedy(sorted=sorted, max_in_line=max_in_line)
+        
     
     def __str__(self):
         gridStr = '['
