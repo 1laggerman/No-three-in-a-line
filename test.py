@@ -4,12 +4,18 @@
 from package.PointG import PointG as Point
 from package.GridG import GridG as Grid
 import json
-from package.statistics import graph_avg, graph_cmpr, to_json_file, run_and_save, graph
+from package.statistics import to_json_file, run_and_save, run, graph
 from package.GridPointsStruct import GridPoints
 
 # run_and_save("Data", Grid.random_greedy, ns=range(3, 4), ds=range(2, 10))
 
-graph("Data/random_greedy.JSON", runner="d", base=(3, 2, 2))
+# run_and_save("Data", Grid.random_greedy, iters=5, ns=[10], ds=[2], ks=range(2, 10))
+graph("Data/random_greedy.JSON", runner="k", base=(10, 2, 2), stop_at=10)
+
+# print(res)
+# to_json_file()
+
+# graph("Data/random_greedy.JSON", runner="d", base=(3, 2, 2))
 
 # g = Grid(2, 3)
 # VP = GridPoints.fromGrid([], g)

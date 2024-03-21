@@ -98,18 +98,17 @@ class GridG:
         return valid_points
     
     
-    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2):
+    def random_greedy(self, sorted: bool = False, max_in_line: int = 2):
         valid_points = GridPoints.fromGrid(self.getAllValidPoints(), self)
         
         chosen_points = GridPoints.fromGrid([], self)
         while(valid_points.__len__() != 0):
             added_point = valid_points.random_choice()
-            valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=allowed_in_line)
+            valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=max_in_line)
             chosen_points.append(added_point)
         if sorted:
             chosen_points.sort()
         return (chosen_points, chosen_points.__len__())
-        
     
     def __str__(self):
         gridStr = '['

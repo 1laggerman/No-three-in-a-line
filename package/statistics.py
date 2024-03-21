@@ -5,7 +5,7 @@ from typing import Callable
 import matplotlib.pyplot as plt
 import math
 import json
-from typing import TypedDict, List
+from typing import TypedDict, List, Tuple, Iterable
 
 class RunData(TypedDict):
     n: int
@@ -100,25 +100,26 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
         
     plt.plot(results_d, base_d, color='red', label='d')
     plt.show()
-    
 
-def run(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
+def run(func: Callable[[Grid, bool, int, Tuple], tuple[list[Point, int]]], *args, iters: int = 5, ns: Iterable[int] = range(3, 10), ds: Iterable[int] = [3], ks: Iterable[int] = [2]):
     data: List[RunData] = []
     for d in ds:
         for n in ns:
-            g = Grid(n, d)
-            sum = 0
-            for _ in range(iters):
-                points, s = func(g, *args)
-                sum += s
-            res: RunData = {"n": n, "d": d, "k": 2, "avg_points": sum / iters, "total_runs": iters}
-            data.append(res)
-            print(f"finished n={n}, d={d}, k={2}: {sum / iters}")
+            for k in ks:
+                g = Grid(n, d)
+                sum = 0
+                for _ in range(iters):
+                    points, s = func(g, False, k, *args)
+                    sum += s
+                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters}
+                data.append(res)
+                print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
     return data
 
-def run_and_save(file_path: str, func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
-    data = run(func, *args, iters=iters, ns=ns, ds=ds)
+def run_and_save(file_path: str, func: Callable[[Grid, bool, int, Tuple], tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3), ks=[2]):
+    data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks)
     to_json_file(file_path, data, func.__name__)
+    return data
 
 def to_json_file(file_path: str, new_data: list[RunData], alg: str):
     filename = file_path + "/" + alg + ".JSON"
@@ -128,8 +129,6 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
             existing_data: List[RunData] = json.load(json_file)
     except:
         existing_data = []
-    # with open(filename, "r") as json_file:
-    #     existing_data: List[RunData] = json.load(json_file)
 
     # Check if data for the given n, d, and k already exists
     add_to_data = []

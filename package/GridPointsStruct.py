@@ -47,6 +47,9 @@ class GridPoints():
             return
         self.m[tuple(other.cords)] = self.l.__len__()
         self.l.append(other)
+        
+    # def sort(self):
+        # self.l.sort()
     
     def __str__(self):
         return self.l.__str__() + "\n" + self.m.__str__()
