@@ -1,6 +1,6 @@
 
-from .PointG import PointG as Point
-from .GridG import GridG as Grid
+from .Point import Point as Point
+from .Grid import Grid as Grid
 from typing import Callable
 import matplotlib.pyplot as plt
 import math
