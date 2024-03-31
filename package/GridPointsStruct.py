@@ -6,16 +6,28 @@ import itertools as it
 import numpy as np
 from math import gcd
 from typing import Any
+from copy import deepcopy
 
 class GridPoints():
     idx_mat: np.ndarray
-    collision_mat: np.ndarray
+    collision_mat: list
     chosen: list[Point]
     valid: list[Point]
     
-    def __init__(self, n: int, d: int): # O(n^d)
+    def __init__(self, n: int, d: int, k_in_line: int = 2): # O(n^d)
         self.idx_mat = np.full((n,) * d, fill_value=-1, dtype=int)
         self.collision_mat = np.full((n,) * d, fill_value=[], dtype=object)
+        self.n = n
+        self.d = d
+        self.k = k_in_line
+        
+        c = []
+        for _ in range(n):
+            c.append([])
+        for _ in range(d - 1):
+            c = [deepcopy(c), deepcopy(c)]
+            
+        self.collision_mat = c
         
         for cords in it.product(range(n), repeat=d):
             self.valid.append(Point(*reversed(cords), n=n))
@@ -32,13 +44,18 @@ class GridPoints():
     def random_choice(self):
         return random.choice(self.chosen)
     
-    def remove(self, point: Point): # O(d)
+    def remove(self, point: Point, from_valid: bool = False): # O(d)
         mat_idx = tuple(point.cords)
-        list_idx = self.idx_mat[mat_idx] - 1
+        list_idx = abs(self.idx_mat[mat_idx]) - 1
         if list_idx < 0:
             raise IndexError()
         
-        self.chosen[list_idx] = self.chosen[-1]
+        if from_valid:
+            self.valid[list_idx] = self.valid[-1]
+            list_idx = -list_idx - 1
+        else:
+            self.chosen[list_idx] = self.chosen[-1]
+            list_idx += 1
         self.idx_mat[tuple(self.chosen[-1].cords)] = list_idx
         self.idx_mat[mat_idx] = 0
         self.chosen.pop()
@@ -50,14 +67,11 @@ class GridPoints():
     def append(self, p: Point): # O(d)
         if p in self:
             return
-        self.idx_mat[tuple(p.cords)] = self.chosen.__len__()
-        self.chosen.append(p)
         
-    # append and update matrix with collisions
-    def add_collision(self, location: Point): # O(d)
-        if location in self:
-            return
-        self.idx_mat[tuple(location.cords)] -= 1
+        self.removeInValidPoints([p], self.k)
+        
+        self.chosen.append(p)
+        self.idx_mat[tuple(p.cords)] = self.chosen.__len__()
     
     def __str__(self):
         return self.chosen.__str__() + "\n" + self.idx_mat.__str__()
@@ -78,23 +92,22 @@ class GridPoints():
             self.idx_mat[tuple(point.cords)] = i
             i += 1
         
-    def removeInValidPoints(self, added_points: list[Point], valid_points: "GridPoints", k_in_line: int = 2):
+    def removeInValidPoints(self, added_points: list[Point], k_in_line: int = 2):
         invalid_points = GridPoints.fromGrid([], self)
             
         if self.__len__() == 0:
             self.append(added_points[-1])
-            valid_points.remove(added_points.pop())
+            self.valid.remove(added_points.pop())
             
-        added = GridPoints.fromGrid(added_points, self)
         for chosen_point in self:
-            for added_point in added:
+            for added_point in added_points:
                 d = chosen_point - added_point
                 d = d // gcd(*(d.cords))
                 
                 on_line = 1
                 point = added_point + d
                 while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in self or point in added:
+                    if point in self or point in added_points:
                         on_line += 1
                     else:
                         invalid_points.append(point)
@@ -103,7 +116,7 @@ class GridPoints():
                     
                 point = added_point - d
                 while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in self or point in added:
+                    if point in self or point in added_points:
                         on_line += 1
                     else:
                         invalid_points.append(point)
@@ -112,16 +125,13 @@ class GridPoints():
                 if on_line >= k_in_line:
                     for point in invalid_points:
                         try:
-                            valid_points.remove(point)
+                            self.remove(point, from_valid=True)
                         except IndexError:
                             pass
                 invalid_points = []
         
-        for point in added:
+        for point in added_points:
             try:
-                valid_points.remove(point)
+                self.remove(point, from_valid=True)
             except IndexError:
                 pass
-                
-        
-        return valid_points

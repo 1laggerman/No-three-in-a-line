@@ -7,6 +7,8 @@ import json
 from package.statistics import graph_avg, graph_cmpr, to_json_file, run_and_save, graph
 from package.GridPointsStruct import GridPoints
 
+from copy import deepcopy
+
 
 
 # run_and_save("Data", Grid.random_greedy, ns=range(3, 4), ds=range(2, 10))
@@ -20,21 +22,33 @@ d = 3
 n = 2
 d = 3
 
-def create_array_of_lists(n, d):
-    if d == 1:
-        return np.array([[] for _ in range(n)], dtype=object)
-    else:
-        return np.array([create_array_of_lists(n, d-1) for _ in range(n)], dtype=object)
+# def create_array_of_lists(n, d):
+#     if d == 1:
+#         return np.array([[] for _ in range(n)], dtype=object)
+#     else:
+#         return np.array([create_array_of_lists(n, d-1) for _ in range(n)], dtype=object)
 
-a = create_array_of_lists(n, d)
+# a = create_array_of_lists(n, d)
 
-a[0, 0, 0].append(3)
-print(a[0, 0, 0, 0])
+# a[0, 0, 0].append(3)
+# print(a[0, 0, 0, 0])
 
 
-# a = [[]] * n
-# for i in range(d - 1):
-#     a = [a, a]
+a = []
+for i in range(n):
+    a.append([])
+for i in range(d - 1):
+    a = [deepcopy(a), deepcopy(a)]
+
+print(a)
+print(a[0])
+print(a[0][0])
+print(a[0][0][0])
+
+a[0][0][0].append(3)
+
+print(a)
+
 
 # a = np.zeros((2,) * 3, dtype=list)
 # a.fill(list())
