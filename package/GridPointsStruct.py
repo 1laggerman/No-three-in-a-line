@@ -5,7 +5,6 @@ from package.Point import Point
 import itertools as it
 import numpy as np
 from math import gcd
-from typing import Any
 from copy import deepcopy
 
 class GridPoints():
@@ -15,11 +14,12 @@ class GridPoints():
     valid: list[Point]
     
     def __init__(self, n: int, d: int, k_in_line: int = 2): # O(n^d)
-        self.idx_mat = np.full((n,) * d, fill_value=-1, dtype=int)
-        self.collision_mat = np.full((n,) * d, fill_value=[], dtype=object)
+        self.idx_mat = np.full((n,) * d, fill_value=0, dtype=int)
         self.n = n
         self.d = d
         self.k = k_in_line
+        self.valid = []
+        self.chosen = []
         
         c = []
         for _ in range(n):
@@ -30,8 +30,10 @@ class GridPoints():
         self.collision_mat = c
         
         for cords in it.product(range(n), repeat=d):
-            self.valid.append(Point(*reversed(cords), n=n))
-        
+            c = cords[::-1]
+            self.valid.append(Point(*c, n=n))
+            self.idx_mat[c] = -self.valid.__len__()
+            
         self.chosen = []
             
     @classmethod

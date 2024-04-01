@@ -34,20 +34,24 @@ d = 3
 # print(a[0, 0, 0, 0])
 
 
-a = []
-for i in range(n):
-    a.append([])
-for i in range(d - 1):
-    a = [deepcopy(a), deepcopy(a)]
+gp = GridPoints(n = 3, d = 3, k_in_line=2)
 
-print(a)
-print(a[0])
-print(a[0][0])
-print(a[0][0][0])
+print(gp)
 
-a[0][0][0].append(3)
+# a = []
+# for i in range(n):
+#     a.append([])
+# for i in range(d - 1):
+#     a = [deepcopy(a), deepcopy(a)]
 
-print(a)
+# print(a)
+# print(a[0])
+# print(a[0][0])
+# print(a[0][0][0])
+
+# a[0][0][0].append(3)
+
+# print(a)
 
 
 # a = np.zeros((2,) * 3, dtype=list)
