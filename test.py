@@ -5,7 +5,7 @@ from package.Point import Point as Point
 from package.Grid import Grid as Grid
 import json
 from package.statistics import graph_avg, graph_cmpr, to_json_file, run_and_save, graph
-from package.GridPointsStruct import GridPoints
+from package.GridPointsStruct import GridPoints, collision
 
 from copy import deepcopy
 
@@ -33,10 +33,21 @@ d = 3
 # a[0, 0, 0].append(3)
 # print(a[0, 0, 0, 0])
 
+# c_mat = np.full((3,) * 2, fill_value=collision(), dtype=collision)
 
-gp = GridPoints(n = 3, d = 3, k_in_line=2)
+# print(c_mat)
+
+gp = GridPoints(n = 3, d = 2, k_in_line=2)
 
 print(gp)
+
+gp.add(Point(0, 0, n=3))
+
+print(gp)
+
+# gp.add(Point(0, 0, n=3))
+
+# print(gp)
 
 # a = []
 # for i in range(n):
