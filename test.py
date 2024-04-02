@@ -36,14 +36,41 @@ d = 3
 # c_mat = np.full((3,) * 2, fill_value=collision(), dtype=collision)
 
 # print(c_mat)
+# p = Point(0, 0, n=3)
+# p1 = Point(0, 0, n=3)
+# a = [p]
+# b = [p1]
 
-gp = GridPoints(n = 3, d = 2, k_in_line=2)
+# print(a == b)
+
+
+
+# a: np.ndarray[collision]
+# a = np.array([[collision(), collision()], [collision(), collision()]], dtype=collision)
+# d: collision = a[0, 0]
+# d.amount += 1
+# print(a)
+
+# a = np.full((2, 2), fill_value=collision(), dtype=collision)
+# a[0, 0].amount = 1
+# print(a)
+
+gp = GridPoints(n=4, d=2, k_in_line=2)
+
+gp.add(Point(0, 0, n=4))
+gp.add(Point(1, 1, n=4))
+# gp.add(Point(0, 1, n=3))
+gp.add(Point(2, 2, n=4))
 
 print(gp)
 
-gp.add(Point(0, 0, n=3))
+# gp = GridPoints(n = 3, d = 2, k_in_line=2)
 
-print(gp)
+# print(gp)
+
+# gp.add(Point(0, 0, n=3))
+
+# print(gp)
 
 # gp.add(Point(0, 0, n=3))
 
