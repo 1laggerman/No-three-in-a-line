@@ -55,14 +55,26 @@ d = 3
 # a[0, 0].amount = 1
 # print(a)
 
-gp = GridPoints(n=4, d=2, k_in_line=2)
+
+gp = GridPoints(n=4, d=2, k_in_line=3)
 
 gp.add(Point(0, 0, n=4))
 gp.add(Point(1, 1, n=4))
-# gp.add(Point(0, 1, n=3))
 gp.add(Point(2, 2, n=4))
+# gp.add(Point(3, 3, n=4))
 
 print(gp)
+
+print(gp.get_lines(Point(3, 3, n=4), 3))
+
+# gp = GridPoints(n=5, d=2, k_in_line=3)
+
+# gp.add(Point(0, 0, n=5))
+# gp.add(Point(1, 1, n=5))
+# gp.add(Point(2, 2, n=5))
+# gp.add(Point(3, 3, n=5))
+
+# print(gp)
 
 # gp = GridPoints(n = 3, d = 2, k_in_line=2)
 
