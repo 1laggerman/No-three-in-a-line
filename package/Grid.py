@@ -19,8 +19,8 @@ class Grid:
         self.d = d
         
     def add_point(self, p: Point):
-        padding = max(0, self.n - p.cords.__len__())
-        self.points.append(Point(*np.pad(p.cords, (0, padding), mode='constant'), n=self.n))
+        padding = max(0, self.n - p.coords.__len__())
+        self.points.append(Point(*np.pad(p.coords, (0, padding), mode='constant'), n=self.n))
         
     def add_points(self, points_arr: list):
         for point in points_arr:
