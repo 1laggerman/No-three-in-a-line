@@ -93,7 +93,7 @@ class GridPoints():
         if p in self:
             return
         
-        self.removeInValidPoints([p], self.k)
+        self.removeInValidPoints(p, self.k)
         self.add_chosen(p)
     
     def __str__(self):
@@ -117,8 +117,43 @@ class GridPoints():
             i += 1
             
             
-    def get_lines(self, p: Point, k: int = 2):
-        lines: list[tuple[Point]] = []
+    def get_line_lines(self, p1: Point, p2: Point, k: int = 2):
+        lines: list[list[Point]] = []
+        chosen = self.chosen.copy()
+        
+        while chosen.__len__() > 0:
+            chosen_point = chosen[0]
+            if chosen_point == p1 or chosen_point == p2:
+                chosen.remove(chosen_point)
+            else:
+                d = p1 - p2
+                d = d // gcd(*(d.coords))
+                
+                line = []
+                
+                point = p1 + d
+                while (point.max_cord() < self.n and point.min_cord() >= 0):
+                    if point in self and point != p2:
+                        line.append(point)
+                    point = point + d 
+                    
+                point = p1 - d
+                while(point.max_cord() < self.n and point.min_cord() >= 0):
+                    if point in self and point != p2:
+                        line.append(point)
+                    point = point - d
+                    
+                if line.__len__() >= k - 2:
+                    for k_line in it.combinations(line, k):
+                        lines.append(list(k_line))
+                        
+                for point in line:
+                    chosen.remove(point)
+            
+        return lines
+            
+    def get_point_lines(self, p: Point, k: int = 2):
+        lines: list[list[Point]] = []
         chosen = self.chosen.copy()
         
         while chosen.__len__() > 0:
@@ -143,67 +178,74 @@ class GridPoints():
                         line.append(point)
                     point = point - d
                     
-                
-                for k_line in it.combinations(line, k):
-                    lines.append(k_line)
-                    
+                if line.__len__() >= k_line - 1:
+                    for k_line in it.combinations(line, k):
+                        lines.append(list(k_line))
+                        
                 for point in line:
                     chosen.remove(point)
             
         return lines
         
-    def removeInValidPoints(self, added_points: list[Point], k_in_line: int = 2):
+    def removeInValidPoints(self, added_point: Point, k_in_line: int = 2):
         invalid_points: list[Point] = []
+        chosen: list[Point] = self.chosen.copy()
             
         if self.__len__() == 0:
-            self.remove(added_points[-1], from_valid=True)
-            self.add_chosen(added_points.pop())
+            self.remove(added_point, from_valid=True)
+            self.add_chosen(added_point)
+            return
             
             
-        for added_point in added_points:
-            if self.idx_mat[tuple(added_point.coords)] == 0:
-                slot: collision = self.collision_mat[tuple(added_point.coords)]
-                for line in slot.lines:
-                    for point in line:
-                        s: collision = self.collision_mat[tuple(point.coords)]
-                        s.amount += 1
-                
-                # slot.amount += 1
-                # slot.lines.append(line)
+        # if self.idx_mat[tuple(added_point.coords)] == 0:
+        #     slot: collision = self.collision_mat[tuple(added_point.coords)]
+        #     for line in slot.lines:
+        #         for point in line:
+        #             s: collision = self.collision_mat[tuple(point.coords)]
+        #             s.amount += 1
+        for chosen_point in chosen:
+            d = chosen_point - added_point
+            d = d // gcd(*(d.coords))
             
-        for chosen_point in self:
-            for added_point in added_points:
-                d = chosen_point - added_point
-                d = d // gcd(*(d.coords))
-                
-                line = [added_point]
-                
-                point = added_point + d
-                while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in self or point in added_points:
-                        line.append(point)
-                    else:
-                        invalid_points.append(point)
-                    point = point + d
-                        
+            line = []
+            
+            point = added_point + d
+            while (point.max_cord() < self.n and point.min_cord() >= 0):
+                if point in self and point != chosen_point:
+                    line.append(point)
+                elif point not in self:
+                    invalid_points.append(point)
+                point = point + d
                     
-                point = added_point - d
-                while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in self or point in added_points:
-                        line.append(point)
-                    if point != chosen_point and point != added_point:
-                        invalid_points.append(point)
-                    point = point - d
+                
+            point = added_point - d
+            while(point.max_cord() < self.n and point.min_cord() >= 0):
+                if point in self and point != chosen_point:
+                    line.append(point)
+                elif point not in self:
+                    invalid_points.append(point)
+                point = point - d
+                
+            if line.__len__() >= k_in_line - 2:
+                lines = list(list(line) for line in it.combinations(line, max(k_in_line - 2, 1)))
+                
+                for i in range(lines.__len__()):
+                    lines[i].append(added_point)
+                    if line.__len__() > k_in_line - 2:
+                        self.add_collision(chosen_point, lines[i].copy())
+                    lines[i].append(chosen_point)
                     
-                if line.__len__() >= k_in_line:
-                    for point in invalid_points:
-                        try:
-                            slot: collision = self.collision_mat[tuple(point.coords)]
-                            slot.amount += 1
-                            slot.lines.append(line)
-                            self.remove(point, from_valid=True)
-                        except IndexError:
-                            pass
+                if k_in_line == 2:
+                    lines = [[added_point, chosen_point]]
+                
+                for point in invalid_points:
+                    try:
+                        for line in lines:
+                            self.add_collision(point, line)
+                        self.remove(point, from_valid=True)
+                    except IndexError:
+                        pass
+                    
                 # elif line.__len__() > k_in_line:
                 #     for point in invalid_points:
                 #         slot: collision = self.collision_mat[tuple(point.coords)]
@@ -239,10 +281,14 @@ class GridPoints():
                 #         except IndexError:
                 #             pass
                 
-                invalid_points = []
+            invalid_points = []
+            
+        try:
+            self.remove(point, from_valid=True)
+        except IndexError:
+            pass
         
-        for point in added_points:
-            try:
-                self.remove(point, from_valid=True)
-            except IndexError:
-                pass
+    def add_collision(self, p: Point, line: list[Point]):
+        slot: collision = self.collision_mat[tuple(p.coords)]
+        slot.amount += 1
+        slot.lines.append(line)
