@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools as it
-import copy
+from copy import deepcopy
 import math
 import random
 from multiprocessing import Process
@@ -109,7 +109,28 @@ class Grid:
             chosen_points.sort()
         return (chosen_points, chosen_points.__len__())
         
-    
+    def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2):
+        gp: GridPoints = GridPoints.fromGrid([], k_in_line=allowed_in_line)
+        while(len(gp.valid) != 0):
+            added_point = gp.random_choice()
+            gp.add(added_point)
+            
+        best_state = deepcopy(gp)
+        i = 0    
+        while i < max_iter:
+            min_conflict_point = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=self.n)
+            gp.add(min_conflict_point)
+            if len(gp.conflicted) == 0:
+                best_state = deepcopy(gp)
+            else:
+                random.choice(gp.conflicted)
+            i += 1
+        
+        if sorted:
+            gp.sort()
+        return (best_state.chosen, len(best_state.chosen))
+
+        
     def __str__(self):
         gridStr = '['
         i = 0
