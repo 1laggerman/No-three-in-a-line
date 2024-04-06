@@ -23,31 +23,35 @@ from copy import deepcopy
 n = 4
 d = 2
 k = 2
-gp = GridPoints(n=n, d=d, k_in_line=k)
-gp.add(Point(0, 0, n=n))
-gp.add(Point(1, 1, n=n))
-gp.add(Point(2, 2, n=n))
-gp.add(Point(3, 3, n=n))
 
-print(gp)
+g = Grid(n=n, d=2)
+print(g)
 
-print(gp.collision_mat[0, 0].lines)
-print(gp.collision_mat[1, 1].lines)
-print(gp.collision_mat[2, 2].lines)
-print(gp.collision_mat[3, 3].lines)
+# gp = GridPoints(n=n, d=d, k_in_line=k)
+# gp.add(Point(0, 0, n=n))
+# gp.add(Point(1, 1, n=n))
+# gp.add(Point(2, 2, n=n))
+# gp.add(Point(3, 3, n=n))
 
-gp.remove(Point(0, 0, n=n))
+# print(gp)
 
-gp.add_collision(Point(0, 1, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-gp.add_collision(Point(0, 2, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-gp.add_collision(Point(0, 3, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+# print(gp.collision_mat[0, 0].lines)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[3, 3].lines)
 
-print(gp)
+# gp.remove(Point(0, 0, n=n))
 
-print(gp.collision_mat[0, 0].lines)
-print(gp.collision_mat[1, 1].lines)
-print(gp.collision_mat[2, 2].lines)
-print(gp.collision_mat[3, 3].lines)
+# gp.add_collision(Point(0, 1, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+# gp.add_collision(Point(0, 2, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+# gp.add_collision(Point(0, 3, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
 
-p = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=n)
-print(p)
+# print(gp)
+
+# print(gp.collision_mat[0, 0].lines)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[3, 3].lines)
+
+# p = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=n)
+# print(p)

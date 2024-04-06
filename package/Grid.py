@@ -137,7 +137,9 @@ class Grid:
         while i < self.points.__len__() - 1:
             gridStr += self.points[i].__str__() + ', '
             i = i + 1
-        gridStr += self.points[i].__str__() + ']'
+        if self.points.__len__() > 0:
+            gridStr += self.points[-1].__str__()
+        gridStr += ']'
         return gridStr
         
     def print_grid_2D(self, solutionID: int = -1, mat: np.ndarray[int] = np.zeros((1, 1))):
