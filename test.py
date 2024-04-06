@@ -26,3 +26,12 @@ print(gp.collision_mat[0, 0].lines)
 print(gp.collision_mat[1, 1].lines)
 print(gp.collision_mat[2, 2].lines)
 print(gp.collision_mat[3, 3].lines)
+
+gp.remove(Point(0, 0, n=n))
+
+print(gp)
+
+print(gp.collision_mat[0, 0].lines)
+print(gp.collision_mat[1, 1].lines)
+print(gp.collision_mat[2, 2].lines)
+print(gp.collision_mat[3, 3].lines)

@@ -69,7 +69,7 @@ class GridPoints():
             list_idx = -list_idx - 1
             last_point = self.valid[-1]
         else:
-            
+            self.remove_chosen(point)
             self.chosen[list_idx] = self.chosen[-1]
             list_idx += 1
             last_point = self.chosen[-1]
@@ -80,6 +80,19 @@ class GridPoints():
             self.valid.pop()
         else:
             self.chosen.pop()
+            
+    def remove_chosen(self, p: Point):
+        for chosen_point in self.chosen:
+            if chosen_point != p:
+                slot: collision = self.collision_mat[tuple(chosen_point.coords)]
+                i = 0
+                while i < len(slot.lines):
+                    if p in slot.lines[i]:
+                        slot.lines.pop(i)
+                        slot.amount -= 1
+                        i -= 1
+                    i += 1
+        
         
     def __contains__(self, key: Point): # O(d)
         return self.idx_mat[tuple(key.coords)] > 0
