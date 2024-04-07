@@ -24,34 +24,52 @@ n = 4
 d = 2
 k = 2
 
-g = Grid(n=n, d=2)
-print(g)
+# g = Grid(n=n, d=2)
+# print(g)
 
-# gp = GridPoints(n=n, d=d, k_in_line=k)
-# gp.add(Point(0, 0, n=n))
-# gp.add(Point(1, 1, n=n))
-# gp.add(Point(2, 2, n=n))
-# gp.add(Point(3, 3, n=n))
+gp = GridPoints(n=n, d=d, k_in_line=k)
+gp.add(Point(0, 0, n=n))
+gp.add(Point(1, 1, n=n))
+gp.add(Point(2, 2, n=n))
+gp.add(Point(3, 3, n=n))
 
-# print(gp)
+print(gp)
 
-# print(gp.collision_mat[0, 0].lines)
-# print(gp.collision_mat[1, 1].lines)
-# print(gp.collision_mat[2, 2].lines)
-# print(gp.collision_mat[3, 3].lines)
+print(gp.collision_mat[0, 0].lines)
+print(gp.collision_mat[1, 1].lines)
+print(gp.collision_mat[2, 2].lines)
+print(gp.collision_mat[3, 3].lines)
 
 # gp.remove(Point(0, 0, n=n))
 
-# gp.add_collision(Point(0, 1, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-# gp.add_collision(Point(0, 2, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-# gp.add_collision(Point(0, 3, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+gp.add_collision(Point(0, 1, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+gp.add_collision(Point(0, 2, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+gp.add_collision(Point(0, 3, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
 
-# print(gp)
+print(gp)
 
-# print(gp.collision_mat[0, 0].lines)
-# print(gp.collision_mat[1, 1].lines)
-# print(gp.collision_mat[2, 2].lines)
-# print(gp.collision_mat[3, 3].lines)
+print(gp.collision_mat[0, 0].lines)
+print(gp.collision_mat[1, 1].lines)
+print(gp.collision_mat[2, 2].lines)
+print(gp.collision_mat[3, 3].lines)
 
 # p = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=n)
-# print(p)
+
+
+vectorized_func = np.vectorize(collision.num)
+
+# Apply the vectorized function to the collision matrix
+probability: np.ndarray = vectorized_func(gp.collision_mat)
+
+# Normalize the probabilities
+probability = probability / np.sum(probability)
+
+print(probability)
+
+c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
+random_conflict = gp.chosen[c]
+print(random_conflict)
+# random_location = np.unravel_index(random_index, gp.idx_mat.shape)
+
+# print(random_location)
+# print(random_index)

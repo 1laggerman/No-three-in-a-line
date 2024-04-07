@@ -28,3 +28,6 @@ class collision():
     
     def __lt__(self, __value: "collision") -> bool:
         return self.amount < __value.amount
+    
+    def num(self):
+        return self.amount
