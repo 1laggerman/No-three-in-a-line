@@ -18,16 +18,28 @@ class collision():
         return str(self)
     
     def __gt__(self, __value: "collision") -> bool:
-        return self.amount > __value.amount
+        if isinstance(__value, collision):
+            return self.amount > __value.amount
+        elif isinstance(__value, int):
+            return self.amount > __value
     
     def __ge__(self, __value: "collision") -> bool:
-        return self.amount >= __value.amount
+        if isinstance(__value, collision):
+            return self.amount >= __value.amount
+        elif isinstance(__value, int):
+            return self.amount >= __value
     
     def __le__(self, __value: "collision") -> bool:
-        return self.amount <= __value.amount
+        if isinstance(__value, collision):
+            return self.amount <= __value.amount
+        elif isinstance(__value, int):
+            return self.amount <= __value
     
     def __lt__(self, __value: "collision") -> bool:
-        return self.amount < __value.amount
+        if isinstance(__value, collision):
+            return self.amount < __value.amount
+        else:
+            return self.amount < __value
     
     def num(self):
         return self.amount

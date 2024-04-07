@@ -24,52 +24,48 @@ n = 4
 d = 2
 k = 2
 
-# g = Grid(n=n, d=2)
-# print(g)
 
-gp = GridPoints(n=n, d=d, k_in_line=k)
-gp.add(Point(0, 0, n=n))
-gp.add(Point(1, 1, n=n))
-gp.add(Point(2, 2, n=n))
-gp.add(Point(3, 3, n=n))
 
-print(gp)
+# g = Grid(n=n, d=d)
+# g.min_conflict(100, False, allowed_in_line=k)
 
-print(gp.collision_mat[0, 0].lines)
-print(gp.collision_mat[1, 1].lines)
-print(gp.collision_mat[2, 2].lines)
-print(gp.collision_mat[3, 3].lines)
 
-# gp.remove(Point(0, 0, n=n))
+gp: GridPoints = GridPoints(n=4, d=2, k_in_line=2)
 
-gp.add_collision(Point(0, 1, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-gp.add_collision(Point(0, 2, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
-gp.add_collision(Point(0, 3, n=n), line=[Point(0,0,n=n), Point(0,1,n=n)])
+gp.add(Point(1, 0, n=n))
+gp.add(Point(0, 1, n=n))
+gp.add(Point(2, 1, n=n))
+
+gp.add_collision(Point(1, 1, n=n), [])
 
 print(gp)
 
-print(gp.collision_mat[0, 0].lines)
-print(gp.collision_mat[1, 1].lines)
-print(gp.collision_mat[2, 2].lines)
-print(gp.collision_mat[3, 3].lines)
+legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
+l = np.where(legal_collision, gp.collision_mat, np.inf)
+print(l)
+# print(type(l[0, 0]))
+print(np.argmin(l))
+argmin_index = np.unravel_index(np.argmin(np.where(legal_collision, gp.collision_mat, np.inf)), gp.idx_mat.shape)
+print(argmin_index)
 
-# p = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=n)
+
+# legal_collision = np.array([[False, False], [True, True]])
+# mat = np.array([[2, 1], [2, 3]])
+# a = np.where(legal_collision, mat, np.inf)
+# argmin_index = np.unravel_index(np.argmin(a), a.shape)
+# print(argmin_index)
 
 
-vectorized_func = np.vectorize(collision.num)
+# a = np.array([[True, False], [False, True]])
+# b = np.array([[2, 1], [3, 3]])
 
-# Apply the vectorized function to the collision matrix
-probability: np.ndarray = vectorized_func(gp.collision_mat)
+# # Create a boolean mask where 'a' is False
+# mask = a
 
-# Normalize the probabilities
-probability = probability / np.sum(probability)
+# # Apply the mask to 'b' to filter out elements where 'a' is False
+# filtered_b = np.where(mask, b, np.inf)
 
-print(probability)
+# # Find the indices of the minimum value in the filtered array
+# argmin_index = np.unravel_index(np.argmin(filtered_b), filtered_b.shape)
 
-c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
-random_conflict = gp.chosen[c]
-print(random_conflict)
-# random_location = np.unravel_index(random_index, gp.idx_mat.shape)
-
-# print(random_location)
-# print(random_index)
+# print("Indices of minimum value where 'a' is False:", argmin_index)

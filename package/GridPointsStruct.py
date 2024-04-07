@@ -158,6 +158,8 @@ class GridPoints():
                         self.remove(point, from_valid=True)
                     except IndexError:
                         pass
+                    
+        self.remove(added_point, from_valid=True)
         
     def add_collision(self, p: Point, line: list[Point]):
         slot: collision = self.collision_mat[tuple(p.coords)]
@@ -170,8 +172,8 @@ class GridPoints():
     def __len__(self):
         return self.chosen.__len__()
     
-    def random_choice(self):
-        return random.choice(self.chosen)
+    # def random_choice(self):
+    #     return random.choice(self.chosen)
     
     def __str__(self):
         return f'chosen: {self.chosen}\nvalid: {self.valid}\nidx_mat: \n{self.idx_mat}\ncollisions: \n{self.collision_mat}'

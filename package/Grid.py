@@ -7,6 +7,7 @@ import random
 from multiprocessing import Process
 from package.Point import Point as Point
 from package.GridPointsStruct import GridPoints
+from package.collision import collision
 
 class Grid:
     points: list[Point] = list()
@@ -110,20 +111,28 @@ class Grid:
         return (chosen_points, chosen_points.__len__())
         
     def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2):
-        gp: GridPoints = GridPoints.fromGrid([], k_in_line=allowed_in_line)
+        gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+        vectorized_func = np.vectorize(collision.num)
         while(len(gp.valid) != 0):
-            added_point = gp.random_choice()
+            added_point = random.choice(gp.valid)
             gp.add(added_point)
             
         best_state = deepcopy(gp)
         i = 0    
         while i < max_iter:
-            min_conflict_point = Point(*np.unravel_index(np.argmin(gp.collision_mat), gp.collision_mat.shape), n=self.n)
+            legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
+            min_conflict_idx = np.argmin(np.where(legal_collision, gp.collision_mat, np.inf))
+            min_conflict_point = Point(*np.unravel_index(min_conflict_idx, n=self.n))
             gp.add(min_conflict_point)
             if len(gp.conflicted) == 0:
                 best_state = deepcopy(gp)
+                i = 0
             else:
-                random.choice(gp.conflicted)
+                probability: np.ndarray = vectorized_func(gp.collision_mat)
+                probability = probability / np.sum(probability)
+                c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
+                random_conflict = gp.chosen[c]
+                gp.remove(random_conflict)
             i += 1
         
         if sorted:
