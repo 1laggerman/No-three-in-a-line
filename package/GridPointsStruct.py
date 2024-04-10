@@ -89,11 +89,11 @@ class GridPoints():
             return
         
         self.removeInValidPoints(p)
-        if self.idx_mat[tuple(p.coords)] == 0:
-            for line in self.collision_mat[tuple(p.coords)].lines:
-                for point in line:
-                    self.conflicted.append(point)
-            self.conflicted.append(p)
+        # if self.idx_mat[tuple(p.coords)] == 0:
+        #     for line in self.collision_mat[tuple(p.coords)].lines:
+        #         for point in line:
+        #             self.conflicted.append(point)
+        #     self.conflicted.append(p)
         self.add_chosen(p)
 
     # append a point to the end of the list and update matrix
@@ -158,8 +158,11 @@ class GridPoints():
                         self.remove(point, from_valid=True)
                     except IndexError:
                         pass
-                    
-        self.remove(added_point, from_valid=True)
+        
+        try:  
+            self.remove(added_point, from_valid=True)
+        except:
+            pass
         
     def add_collision(self, p: Point, line: list[Point]):
         slot: collision = self.collision_mat[tuple(p.coords)]

@@ -7,6 +7,7 @@ import json
 from package.statistics import graph_avg, graph_cmpr, to_json_file, run_and_save, graph
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
+import random
 
 import itertools as it
 from copy import deepcopy
@@ -24,29 +25,74 @@ n = 4
 d = 2
 k = 2
 
+g = Grid(n=n, d=d)
+g.min_conflict(100, False, allowed_in_line=k)
+
+# gp = GridPoints(n=n, d=d, k_in_line=k)
+# print(np.apply_over_axes(collision.num, gp.collision_mat, axes=[0,1]))
+# vectorized_func = np.vectorize(collision.num)
+# collision_count = vectorized_func(gp.collision_mat)
+# print(collision_count)
+# collision_count = vectorized_func(gp.conflicted)
 
 
-# g = Grid(n=n, d=d)
-# g.min_conflict(100, False, allowed_in_line=k)
 
+# a = np.array([[, np.inf], [1, 2]])
+# print(np.min(a))
 
-gp: GridPoints = GridPoints(n=4, d=2, k_in_line=2)
+# conflicts = np.array([[True, False], [False, True]])
+# collision_mat = np.array([[3, 1], [3, 2]])
+# conflicts = np.where(conflicts, collision_mat, 0)
+# conflicts = conflicts / np.sum(conflicts)
+# print(conflicts)
 
-gp.add(Point(1, 0, n=n))
-gp.add(Point(0, 1, n=n))
-gp.add(Point(2, 1, n=n))
+# min_conflict_points = np.array([[True, False], [False, True]])
+# indices = np.where(min_conflict_points)
+# random_index = tuple(random.choice(indices) for indices in min_conflict_points)
+# added_point = random.choice(indices)
 
-gp.add_collision(Point(1, 1, n=n), [])
+# print(random_index)
+# print(indices)
 
-print(gp)
+# print(added_point)
+# gp: GridPoints = GridPoints(n=4, d=2, k_in_line=2)
 
-legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
-l = np.where(legal_collision, gp.collision_mat, np.inf)
-print(l)
-# print(type(l[0, 0]))
-print(np.argmin(l))
-argmin_index = np.unravel_index(np.argmin(np.where(legal_collision, gp.collision_mat, np.inf)), gp.idx_mat.shape)
-print(argmin_index)
+# gp.add(Point(1, 1, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(2, 2, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(1, 2, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(2, 1, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+
+# gp.add_collision(Point(1, 1, n=n), [])
+
+# print(gp)
+
+# legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
+# l = np.where(legal_collision, gp.collision_mat, np.inf)
+# print(l)
+# # print(type(l[0, 0]))
+# print(np.argmin(l))
+# argmin_index = np.unravel_index(np.argmin(np.where(legal_collision, gp.collision_mat, np.inf)), gp.idx_mat.shape)
+# print(argmin_index)
 
 
 # legal_collision = np.array([[False, False], [True, True]])

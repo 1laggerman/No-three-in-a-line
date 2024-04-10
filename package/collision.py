@@ -1,4 +1,5 @@
 from package.Point import Point
+import random
 
 class collision():
     amount: int = 0
@@ -20,19 +21,19 @@ class collision():
     def __gt__(self, __value: "collision") -> bool:
         if isinstance(__value, collision):
             return self.amount > __value.amount
-        elif isinstance(__value, int):
+        else:
             return self.amount > __value
     
     def __ge__(self, __value: "collision") -> bool:
         if isinstance(__value, collision):
             return self.amount >= __value.amount
-        elif isinstance(__value, int):
+        else:
             return self.amount >= __value
     
     def __le__(self, __value: "collision") -> bool:
         if isinstance(__value, collision):
             return self.amount <= __value.amount
-        elif isinstance(__value, int):
+        else:
             return self.amount <= __value
     
     def __lt__(self, __value: "collision") -> bool:
@@ -40,6 +41,7 @@ class collision():
             return self.amount < __value.amount
         else:
             return self.amount < __value
+            # return True if self.amount < __value else random.choice([True, False])
     
     def num(self):
         return self.amount

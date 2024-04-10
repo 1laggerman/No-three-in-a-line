@@ -112,25 +112,37 @@ class Grid:
         
     def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2):
         gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+        # vectorized_func = np.vectorize(collision.num, otypes=[int])
         vectorized_func = np.vectorize(collision.num)
+        
         while(len(gp.valid) != 0):
             added_point = random.choice(gp.valid)
             gp.add(added_point)
             
         best_state = deepcopy(gp)
-        i = 0    
+        i = 0
         while i < max_iter:
-            legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
-            min_conflict_idx = np.argmin(np.where(legal_collision, gp.collision_mat, np.inf))
-            min_conflict_point = Point(*np.unravel_index(min_conflict_idx, n=self.n))
-            gp.add(min_conflict_point)
+            collision_count = vectorized_func(gp.collision_mat)
+            legal_collision = np.logical_and(collision_count > 0, gp.idx_mat <= 0)
+            min_conflict_value = np.min(np.where(legal_collision, collision_count, np.inf))
+            min_conflict_points: np.ndarray = collision_count == min_conflict_value
+            
+            choose_from = np.where(min_conflict_points)
+            added_point_idx = np.random.choice(choose_from[0])
+            added_point_coords = tuple([choose_from[i][added_point_idx] for i in range(len(choose_from))])
+            added_point = Point(*added_point_coords, n=self.n)
+            
+            gp.add(added_point)
             if len(gp.conflicted) == 0:
                 best_state = deepcopy(gp)
                 i = 0
             else:
-                probability: np.ndarray = vectorized_func(gp.collision_mat)
-                probability = probability / np.sum(probability)
-                c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
+                c = random.choice(gp.conflicted)
+                conflicts = np.logical_and(gp.collision_mat > 0, gp.idx_mat > 0)
+                conflicts = np.where(conflicts, vectorized_func(gp.collision_mat), 0)
+                # probability: np.ndarray = vectorized_func(gp.collision_mat)
+                # probability = probability / np.sum(probability)
+                # c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
                 random_conflict = gp.chosen[c]
                 gp.remove(random_conflict)
             i += 1
