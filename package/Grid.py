@@ -47,59 +47,6 @@ class Grid:
                                 
         return ValidPoints
     
-    def removeInValidPoints(self, added_points: list[Point], valid_points: GridPoints, chosen_points: GridPoints = None, k_in_line: int = 2):
-        invalid_points = GridPoints.fromGrid([], self)
-        
-        chosen = chosen_points
-        if chosen_points is None:
-            chosen = GridPoints.fromGrid([], self)
-            
-        if chosen_points.__len__() == 0:
-            chosen.append(added_points[-1])
-            valid_points.remove(added_points.pop())
-            
-        added = GridPoints.fromGrid(added_points, self)
-        for chosen_point in chosen:
-            for added_point in added:
-                d = chosen_point - added_point
-                d = d // math.gcd(*(d.cords))
-                
-                on_line = 1
-                point = added_point + d
-                while (point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in chosen or point in added:
-                        on_line += 1
-                    else:
-                        invalid_points.append(point)
-                    point = point + d
-                        
-                    
-                point = added_point - d
-                while(point.max_cord() < self.n and point.min_cord() >= 0):
-                    if point in chosen or point in added:
-                        on_line += 1
-                    else:
-                        invalid_points.append(point)
-                    point = point - d
-                    
-                if on_line >= k_in_line:
-                    for point in invalid_points:
-                        try:
-                            valid_points.remove(point)
-                        except IndexError:
-                            pass
-                invalid_points = []
-        
-        for point in added:
-            try:
-                valid_points.remove(point)
-            except IndexError:
-                pass
-                
-        
-        return valid_points
-    
-    
     def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2):
         gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
         
@@ -110,33 +57,19 @@ class Grid:
         if sorted:
             gp.sort()
         
-        return (gp.chosen, len(gp.chosen))
-    # def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2):
-    #     valid_points = GridPoints.fromGrid(self.getAllValidPoints(), self)
-
-    #     chosen_points: GridPoints = GridPoints.fromGrid([], self)
-    #     while(valid_points.__len__() != 0):
-    #         added_point = valid_points.random_choice()
-    #         valid_points = self.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=allowed_in_line)
-    #         chosen_points.append(added_point)
-    #     if sorted:
-    #         chosen_points.sort()
-    #     return (chosen_points, chosen_points.__len__())
+        return gp
         
-    def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2):
-        gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+    def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2, start_from: GridPoints = None):
+        gp: GridPoints = None
+        if start_from is None:
+            gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+        else:
+            gp = start_from
         vectorized_func = np.vectorize(collision.num)
-        
-        while(len(gp.valid) != 0):
-            added_point = random.choice(gp.valid)
-            gp.add(added_point)
-            
-        start = len(gp.chosen)
             
         best_state = deepcopy(gp)
         i = 0
         while i < max_iter and len(gp.chosen) < allowed_in_line * self.upper_bound:
-            print(i)
             collision_count = vectorized_func(gp.collision_mat)
             
             # new valid point: collision_count = 0 and idx_mat <= 0
@@ -159,7 +92,7 @@ class Grid:
         
         if sorted:
             gp.sort()
-        return (best_state.chosen, len(best_state.chosen), start)
+        return best_state
         
     def __str__(self):
         gridStr = '['
@@ -208,7 +141,7 @@ class Grid:
                 ax.plot([0, self.n - 1], [y, y], 'grey')
 
             for point in self.points:
-                ax.scatter([point.x], [point.y], color='black', s=250)
+                ax.scatter([point.coords[0]], [point.coords[1]], color='black', s=250)
             if solutionID != -1:
                 for point in self.solutions[solutionID]:
                     ax.scatter([point.x], [point.y], color='black', s=250)
@@ -237,7 +170,7 @@ class Grid:
             ax.plot3D([0, 0], [0, 0], [0, self.n - 1], 'blue') # blue to visualize Z axis
             
             for point in self.points: # paint all dots on grid
-                ax.scatter([point.x], [point.y], [point.z], color='black', s=250)
+                ax.scatter([point.coords[0]], [point.coords[1]], [point.coords[2]], color='black', s=250)
             if solutionID[0] != -1:
                 z = 0
                 for s in solutionID:

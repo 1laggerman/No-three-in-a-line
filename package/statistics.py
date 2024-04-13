@@ -1,6 +1,7 @@
 
 from .Point import Point as Point
 from .Grid import Grid as Grid
+from .GridPointsStruct import GridPoints as GridPoints
 from typing import Callable
 import matplotlib.pyplot as plt
 import math
@@ -53,7 +54,7 @@ def graph(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 1
     plt.show()
     
 
-def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 10, ns = range(3, 10), ds=range(2, 3)):
+def graph_avg(func: Callable[..., GridPoints], *args, iters: int = 10, ns = range(3, 10), ds=range(2, 3)):
         results = []
         base = []
         for d in ds:
@@ -61,8 +62,8 @@ def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 
                 g = Grid(n, d)
                 sum = 0
                 for _ in range(iters):
-                    points, s = func(g, *args)
-                    sum += s
+                    gp = func(g, *args)
+                    sum += len(gp.chosen)
                 results.append(sum / iters)
                 base.append(math.pow(n, d))
                 print(f"finished n={n}, d={d}: {sum / iters}")
@@ -72,7 +73,7 @@ def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 
         plt.plot(results, base)
         plt.show()
         
-def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 10, rg = range(3, 10), base: int = 3):
+def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = range(3, 10), base: int = 3):
     results_n = []
     base_n = []
     
@@ -80,8 +81,8 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
         g = Grid(n, base)
         sum = 0
         for _ in range(iters):
-            points, s = func(g, *args)
-            sum += s
+            gp = func(g, *args)
+            sum += len(gp.chosen)
         results_n.append(sum / iters)
         base_n.append(math.pow(n, base))
     
@@ -93,8 +94,8 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
         g = Grid(base, d)
         sum = 0
         for _ in range(iters):
-            points, s = func(g, *args)
-            sum += s
+            gp = func(g, *args)
+            sum += len(gp.chosen)
         results_d.append(sum / iters)
         base_d.append(math.pow(base, d))
         
@@ -102,21 +103,21 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
     plt.show()
     
 
-def run(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
+def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
     data: List[RunData] = []
     for d in ds:
         for n in ns:
             g = Grid(n, d)
             sum = 0
             for _ in range(iters):
-                points, s = func(g, *args)
-                sum += s
+                gp = func(g, *args)
+                sum += len(gp.chosen)
             res: RunData = {"n": n, "d": d, "k": 2, "avg_points": sum / iters, "total_runs": iters}
             data.append(res)
             print(f"finished n={n}, d={d}, k={2}: {sum / iters}")
     return data
 
-def run_and_save(file_path: str, func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
+def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
     data = run(func, *args, iters=iters, ns=ns, ds=ds)
     to_json_file(file_path, data, func.__name__)
 

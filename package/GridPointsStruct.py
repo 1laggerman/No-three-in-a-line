@@ -39,15 +39,15 @@ class GridPoints():
     def sort(self):
         self.chosen.sort()
         self.valid.sort()
-        i = 0
+        i = 1
         for point in self.chosen:
             self.idx_mat[tuple(point.coords)] = i
             i += 1
             
-        i = 0
+        i = -1
         for point in self.valid:
-            self.idx_mat[tuple(point.coords)] = -i
-            i += 1
+            self.idx_mat[tuple(point.coords)] = i
+            i -= 1
     
     def remove(self, point: Point, from_valid: bool = False): # O(d)
         mat_idx = tuple(point.coords)

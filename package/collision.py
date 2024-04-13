@@ -1,5 +1,4 @@
 from package.Point import Point
-import random
 
 class collision():
     amount: int = 0
