@@ -21,18 +21,18 @@ from copy import deepcopy
 # print(np.min(a))
 
 
-n = 3
-d = 4
-k = 2
+n = 4
+d = 2
+k = 3
 
 g = Grid(n=n, d=d)
 rg = g.random_greedy(sorted=True, allowed_in_line=k)
 print(len(rg.chosen))
 # g.add_points(rg.chosen)
-# g.draw_grid()
 best = g.min_conflict(100, False, allowed_in_line=k, start_from=rg)
 
-print(best[1])
+g.add_points(best.chosen)
+g.draw_grid()
 
 # gp = GridPoints(n=n, d=d, k_in_line=k)
 # gp.add(Point(0, 0, n=n))

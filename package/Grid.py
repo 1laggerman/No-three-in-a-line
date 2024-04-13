@@ -141,9 +141,9 @@ class Grid:
                 ax.plot([0, self.n - 1], [y, y], 'grey')
 
             for point in self.points:
-                ax.scatter([point.coords[0]], [point.coords[1]], color='black', s=250)
-            if solutionID != -1:
-                for point in self.solutions[solutionID]:
+                ax.scatter([point.coords[0]], [point.coords[1]], s=500, c='r', edgecolor='black', linewidth=2)	
+            if solutionID != [-1]:
+                for point in self.solutions[solutionID[0]]:
                     ax.scatter([point.x], [point.y], color='black', s=250)
             
         elif self.d == 3:
