@@ -175,8 +175,12 @@ class GridPoints():
     def __len__(self):
         return self.chosen.__len__()
     
-    # def random_choice(self):
-    #     return random.choice(self.chosen)
+    def choose(self, condition: np.ndarray):
+        choose_from = np.where(condition)
+        point_idx = np.random.choice(choose_from[0])
+        point_coords = tuple([choose_from[i][point_idx] for i in range(len(choose_from))])
+        point = Point(*point_coords, n=self.n)
+        return point 
     
     def __str__(self):
         return f'chosen: {self.chosen}\nvalid: {self.valid}\nidx_mat: \n{self.idx_mat}\ncollisions: \n{self.collision_mat}'

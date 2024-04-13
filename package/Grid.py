@@ -112,7 +112,6 @@ class Grid:
         
     def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2):
         gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
-        # vectorized_func = np.vectorize(collision.num, otypes=[int])
         vectorized_func = np.vectorize(collision.num)
         
         while(len(gp.valid) != 0):
@@ -127,10 +126,11 @@ class Grid:
             min_conflict_value = np.min(np.where(legal_collision, collision_count, np.inf))
             min_conflict_points: np.ndarray = collision_count == min_conflict_value
             
-            choose_from = np.where(min_conflict_points)
-            added_point_idx = np.random.choice(choose_from[0])
-            added_point_coords = tuple([choose_from[i][added_point_idx] for i in range(len(choose_from))])
-            added_point = Point(*added_point_coords, n=self.n)
+            added_point = self.choose(min_conflict_points)
+            # choose_from = np.where(min_conflict_points)
+            # added_point_idx = np.random.choice(choose_from[0])
+            # added_point_coords = tuple([choose_from[i][added_point_idx] for i in range(len(choose_from))])
+            # added_point = Point(*added_point_coords, n=self.n)
             
             gp.add(added_point)
             if len(gp.conflicted) == 0:
@@ -138,19 +138,20 @@ class Grid:
                 i = 0
             else:
                 c = random.choice(gp.conflicted)
-                conflicts = np.logical_and(gp.collision_mat > 0, gp.idx_mat > 0)
-                conflicts = np.where(conflicts, vectorized_func(gp.collision_mat), 0)
+                # conflicts = np.logical_and(gp.collision_mat > 0, gp.idx_mat > 0)
+                # conflicts = np.where(conflicts, vectorized_func(gp.collision_mat), 0)
                 # probability: np.ndarray = vectorized_func(gp.collision_mat)
                 # probability = probability / np.sum(probability)
                 # c = np.random.choice(gp.idx_mat.flatten(), p=probability.flatten())
-                random_conflict = gp.chosen[c]
+                # list_idx = gp.idx_mat[tuple(c.coords)]
+                list_idx: int = gp.idx_mat[tuple(c.coords)]
+                random_conflict = gp.chosen[list_idx]
                 gp.remove(random_conflict)
             i += 1
         
         if sorted:
             gp.sort()
         return (best_state.chosen, len(best_state.chosen))
-
         
     def __str__(self):
         gridStr = '['
@@ -251,3 +252,10 @@ class Grid:
         # manager.full_screen_toggle()
         # ax.margins(0.02)
         plt.show()
+        
+    def choose(self, condition: np.ndarray):
+        choose_from = np.where(condition)
+        point_idx = np.random.choice(choose_from[0])
+        point_coords = tuple([choose_from[i][point_idx] for i in range(len(choose_from))])
+        point = Point(*point_coords, n=self.n)
+        return point 
