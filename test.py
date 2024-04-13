@@ -26,9 +26,20 @@ d = 2
 k = 2
 
 g = Grid(n=n, d=d)
-g.min_conflict(100, False, allowed_in_line=k)
+best = g.min_conflict(100, False, allowed_in_line=k)
 
+print(best)
 # gp = GridPoints(n=n, d=d, k_in_line=k)
+# gp.add(Point(0, 0, n=n))
+# gp.add(Point(1, 1, n=n))
+# gp.add(Point(2, 2, n=n))
+
+# suspects = np.where(gp.collision_mat > 0)
+# print(suspects)
+# for j in range(len(suspects[0])):
+#     suspect_point = Point(*tuple([suspects[k][j] for k in range(d)]), n=n)
+
+
 # print(np.apply_over_axes(collision.num, gp.collision_mat, axes=[0,1]))
 # vectorized_func = np.vectorize(collision.num)
 # collision_count = vectorized_func(gp.collision_mat)

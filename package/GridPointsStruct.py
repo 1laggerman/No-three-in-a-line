@@ -73,28 +73,37 @@ class GridPoints():
             self.chosen.pop()
             
     def remove_chosen(self, p: Point):
-        for chosen_point in self.chosen:
-            if chosen_point != p:
-                slot: collision = self.collision_mat[tuple(chosen_point.coords)]
-                i = 0
-                while i < len(slot.lines):
-                    if p in slot.lines[i]:
-                        slot.lines.pop(i)
-                        slot.amount -= 1
-                        i -= 1
-                    i += 1
+        suspects = np.where(self.collision_mat >= 0)
+        for j in range(len(suspects[0])):
+            suspect_point = tuple([suspects[k][j] for k in range(self.d)])
+            slot: collision = self.collision_mat[suspect_point]
+            i = 0
+            while i < len(slot.lines):
+                if p in slot.lines[i]:
+                    slot.lines.pop(i)
+                    slot.amount -= 1
+                    i -= 1
+                i += 1
                         
     def add(self, p: Point):
         if p in self:
             return
         
         self.removeInValidPoints(p)
-        # if self.idx_mat[tuple(p.coords)] == 0:
-        #     for line in self.collision_mat[tuple(p.coords)].lines:
-        #         for point in line:
-        #             self.conflicted.append(point)
-        #     self.conflicted.append(p)
+        
         self.add_chosen(p)
+        conflicts = np.logical_and(self.collision_mat > 0, self.idx_mat > 0)
+        conflicts = np.where(conflicts)
+        self.conflicted = []
+        if len(conflicts[0]) == 0:
+            return
+        
+        for i in range(len(conflicts[0])):
+            # for j in range(len(conflicts[i])):
+                # point = Point(*conflicts[i][j], n=self.n)
+            point_coords = tuple([conflicts[j][i] for j in range(len(conflicts))])
+            self.conflicted.append(Point(*point_coords, n=self.n))
+            # point = Point(*conflicts[::-1][i], n=self.n)
 
     # append a point to the end of the list and update matrix
     def add_chosen(self, p: Point): # O(d)
