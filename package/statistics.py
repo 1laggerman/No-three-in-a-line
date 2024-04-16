@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import math
 import json
 from typing import TypedDict, List
+# import tqdm
 
 class RunData(TypedDict):
     n: int
@@ -48,6 +49,12 @@ def graph(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 1
             
     print(data)
     print(axis)
+    fig = plt.figure(data_file.split('/')[-1].split('.')[0] + f" {others[0]}={values[0]}, {others[1]}={values[1]}")
+    ax = plt.gca()
+    # ax.set_xlim([xmin, xmax])
+    ax.spines['top'].set_visible(False)
+    ax.set_ylim([0, 1.01])
+    plt.title(f"{others[0]}={values[0]}, {others[1]}={values[1]}")
     plt.plot(axis, data)
     plt.xlabel(runner)
     plt.ylabel(func.__name__)
@@ -103,22 +110,25 @@ def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = ran
     plt.show()
     
 
-def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
+def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
     data: List[RunData] = []
-    for d in ds:
-        for n in ns:
-            g = Grid(n, d)
-            sum = 0
-            for _ in range(iters):
-                gp = func(g, *args)
-                sum += len(gp.chosen)
-            res: RunData = {"n": n, "d": d, "k": 2, "avg_points": sum / iters, "total_runs": iters}
-            data.append(res)
-            print(f"finished n={n}, d={d}, k={2}: {sum / iters}")
+    for k in ks:
+        for d in ds:
+            for n in ns:
+                g = Grid(n, d)
+                sum = 0
+                print('staring run for n=', n, 'd=', d, 'k=', k)
+                # for _ in tqdm(range(iters)):
+                for _ in range(iters):
+                    gp = func(g, *args, allowed_in_line=k)
+                    sum += len(gp.chosen)
+                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters}
+                data.append(res)
+                print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
     return data
 
-def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3)):
-    data = run(func, *args, iters=iters, ns=ns, ds=ds)
+def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
+    data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks)
     to_json_file(file_path, data, func.__name__)
 
 def to_json_file(file_path: str, new_data: list[RunData], alg: str):

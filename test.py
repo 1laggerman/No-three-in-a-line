@@ -4,7 +4,7 @@ import numpy as np
 from package.Point import Point as Point
 from package.Grid import Grid as Grid
 import json
-from package.statistics import graph_avg, graph_cmpr, to_json_file, run_and_save, graph
+from package.statistics import to_json_file, run_and_save, graph, run
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
 import random
@@ -25,14 +25,20 @@ n = 4
 d = 2
 k = 3
 
-g = Grid(n=n, d=d)
-rg = g.random_greedy(sorted=True, allowed_in_line=k)
-print(len(rg.chosen))
-# g.add_points(rg.chosen)
-best = g.min_conflict(100, False, allowed_in_line=k, start_from=rg)
+# print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
+# run_and_save(file_path="Data", func=Grid.random_greedy, ns=range(10, 20), ds=[2], ks=[2], iters=5)
+# run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
+# graph('Data/min_conflict.JSON', runner='n', base=(3, 2, 2), stop_at=20)
+graph('Data/random_greedy.JSON', runner='n', base=(3, 2, 2), stop_at=20)
 
-g.add_points(best.chosen)
-g.draw_grid()
+# g = Grid(n=n, d=d)
+# rg = g.random_greedy(sorted=True, allowed_in_line=k)
+# print(len(rg.chosen))
+# g.add_points(rg.chosen)
+# best = g.min_conflict(100, False, allowed_in_line=k, start_from=rg)
+
+# g.add_points(best.chosen)
+# g.draw_grid()
 
 # gp = GridPoints(n=n, d=d, k_in_line=k)
 # gp.add(Point(0, 0, n=n))
