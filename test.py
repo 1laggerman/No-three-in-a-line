@@ -29,7 +29,7 @@ k = 3
 # run_and_save(file_path="Data", func=Grid.random_greedy, ns=range(10, 20), ds=[2], ks=[2], iters=5)
 # run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
 # graph('Data/min_conflict.JSON', runner='n', base=(3, 2, 2), stop_at=20)
-graph('Data/random_greedy.JSON', runner='n', base=(3, 2, 2), stop_at=20)
+graph('Data/random_greedy.JSON', runner='d', base=(3, 2, 2), stop_at=20)
 
 # g = Grid(n=n, d=d)
 # rg = g.random_greedy(sorted=True, allowed_in_line=k)

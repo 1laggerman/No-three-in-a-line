@@ -2,9 +2,12 @@
 # importing required libraries 
 from matplotlib import pyplot as plt 
 import numpy as np 
-import matplotlib.animation as animation 
-from IPython import display 
+import matplotlib.animation as animation
 import random
+import os
+ffmpeg_source = "C:/ProgramData/anaconda3/Library/bin/ffmpeg"
+plt.rcParams['animation.ffmpeg_path'] = ffmpeg_source
+# import ffmpeg
 
 from package import GridPoints
 from package.collision import collision
@@ -39,12 +42,12 @@ vectorized_func = np.vectorize(collision.num)
 gp.adding = True
 
 def animate(frame_number):
-    if frame_number % 100 == 0 and frame_number > 0: 
+    if frame_number > 0: 
         if len(gp.valid) > 0:
             # print('adding point', len(gp.chosen), 'at frame ', frame_number)
             added_point = random.choice(gp.valid)
             gp.add(added_point)
-        elif len(gp.chosen) < k * n:
+        elif len(gp.chosen) < k * n or gp.adding == False:
             collision_count = vectorized_func(gp.collision_mat)
             if gp.adding:
                 legal_collision = gp.idx_mat <= 0
@@ -84,12 +87,13 @@ def animate(frame_number):
     return line, 
   
   
-anim = animation.FuncAnimation(fig, animate, frames=3000, interval=600, blit=True) 
+anim = animation.FuncAnimation(fig, animate, frames=60, interval=60, blit=True) 
 # fig.suptitle('Straight Line plot', fontsize=14) 
   
 # plt.show()
   
 # saving to m4 using ffmpeg writer 
-writervideo = animation.PillowWriter(fps=60)  
+writervideo = animation.FFMpegWriter(fps=1)
+# writervideo = animation.PillowWriter(fps=1)
 anim.save('min_conflict_2.gif', writer=writervideo) 
 plt.close() 
