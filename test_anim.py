@@ -42,7 +42,7 @@ vectorized_func = np.vectorize(collision.num)
 gp.adding = True
 
 def animate(frame_number):
-    if frame_number > 0: 
+    if frame_number > 0 and frame_number % 2 == 0: 
         if len(gp.valid) > 0:
             # print('adding point', len(gp.chosen), 'at frame ', frame_number)
             added_point = random.choice(gp.valid)
@@ -87,13 +87,13 @@ def animate(frame_number):
     return line, 
   
   
-anim = animation.FuncAnimation(fig, animate, frames=60, interval=60, blit=True) 
+anim = animation.FuncAnimation(fig, animate, frames=50, interval=50, blit=True) 
 # fig.suptitle('Straight Line plot', fontsize=14) 
   
 # plt.show()
   
 # saving to m4 using ffmpeg writer 
-writervideo = animation.FFMpegWriter(fps=1)
-# writervideo = animation.PillowWriter(fps=1)
+# writervideo = animation.FFMpegWriter(fps=1)
+writervideo = animation.PillowWriter(fps=1)
 anim.save('min_conflict_2.gif', writer=writervideo) 
 plt.close() 
