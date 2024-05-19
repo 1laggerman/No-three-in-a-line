@@ -11,6 +11,8 @@ import random
 
 import itertools as it
 from copy import deepcopy
+import tqdm
+import time
 
 # a = np.full((4,) * 2, fill_value=None, dtype=collision)
 
@@ -19,17 +21,27 @@ from copy import deepcopy
 #     a[c] = collision()
     
 # print(np.min(a))
+# i = 0
+# with tqdm.tqdm(total=10) as bar:
+#     while i < 10:
+#         i += 1
+#         bar.update(1)
+#         time.sleep(1)
+#         if i == 5:
+#             bar.update(-i)
+#             i = 0
+#         time.sleep(0.5)
 
 
-n = 4
-d = 2
-k = 3
+n = 10
+d = 4
+k = 2
 
 # print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
-# run_and_save(file_path="Data", func=Grid.random_greedy, ns=range(10, 20), ds=[2], ks=[2], iters=5)
+run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
 # run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
 # graph('Data/min_conflict.JSON', runner='n', base=(3, 2, 2), stop_at=20)
-graph('Data/min_conflict.JSON', runner='k', base=(50, 2, 2), stop_at=20)
+# graph('Data/min_conflict.JSON', runner='k', base=(50, 2, 2), stop_at=20)
 
 # g = Grid(n=n, d=d)
 # rg = g.random_greedy(sorted=True, allowed_in_line=k)

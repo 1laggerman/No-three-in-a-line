@@ -8,6 +8,7 @@ from multiprocessing import Process
 from package.Point import Point as Point
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
+import tqdm
 
 class Grid:
     points: list[Point] = list()
@@ -59,7 +60,7 @@ class Grid:
         
         return gp
         
-    def min_conflict(self, max_iter: int = 1000, sorted: bool = True, allowed_in_line: int = 2, start_from: GridPoints = None):
+    def min_conflict(self, max_iter: int = 100, sorted: bool = True, allowed_in_line: int = 2, start_from: GridPoints = None):
         gp: GridPoints = None
         if start_from is None:
             gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
@@ -68,30 +69,37 @@ class Grid:
         vectorized_func = np.vectorize(collision.num)
             
         best_state = deepcopy(gp)
+        iters = []
         i = 0
-        while i < max_iter and len(gp.chosen) < allowed_in_line * self.upper_bound:
-            collision_count = vectorized_func(gp.collision_mat)
-            
-            # new valid point: collision_count = 0 and idx_mat <= 0
-            legal_collision = gp.idx_mat <= 0
-            collisions = np.logical_and(collision_count >= 0, legal_collision)
-            min_conflict_value = np.min(np.where(collisions, collision_count, np.inf))
-            min_conflict_points: np.ndarray = np.logical_and(collision_count == min_conflict_value, legal_collision)
-            
-            added_point = self.choose(min_conflict_points)
-            
-            gp.add(added_point)
-            
-            if len(gp.conflicted) == 0 or min_conflict_value == 0:
-                best_state = deepcopy(gp)
-                i = -1
-            else:
-                c = random.choice(gp.conflicted)
-                gp.remove(c)
-            i += 1
+        with tqdm.tqdm(total=max_iter) as bar:
+            while i < max_iter and len(gp.chosen) < allowed_in_line * self.upper_bound:
+                i += 1
+                bar.update(1)
+                collision_count = vectorized_func(gp.collision_mat)
+                
+                # new valid point: collision_count = 0 and idx_mat <= 0
+                legal_collision = gp.idx_mat <= 0
+                collisions = np.logical_and(collision_count >= 0, legal_collision)
+                min_conflict_value = np.min(np.where(collisions, collision_count, np.inf))
+                min_conflict_points: np.ndarray = np.logical_and(collision_count == min_conflict_value, legal_collision)
+                
+                added_point = self.choose(min_conflict_points)
+                
+                gp.add(added_point)
+                
+                if len(gp.conflicted) == 0 or min_conflict_value == 0:
+                    best_state = deepcopy(gp)
+                    iters.append(i)
+                    bar.update(-i)
+                    i = 0
+                else:
+                    c = random.choice(gp.conflicted)
+                    gp.remove(c)
         
         if sorted:
             gp.sort()
+        # plt.plot(iters)
+        # plt.show()
         return best_state
         
     def __str__(self):
