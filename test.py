@@ -35,7 +35,7 @@ import time
 
 n = 10
 d = 4
-k = 2
+k = 5
 
 # print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
 run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
