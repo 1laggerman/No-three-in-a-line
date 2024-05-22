@@ -1,119 +1,155 @@
 # import math
-# import numpy as np
+import numpy as np
 # import matplotlib.pyplot as plt
-from package.PointG import PointG as Point
-from package.GridG import GridG as Grid
+from package.Point import Point as Point
+from package.Grid import Grid as Grid
 import json
-from package.statistics import to_json_file, run_and_save, run, graph
+from package.statistics import to_json_file, run_and_save, graph, run, RunData
 from package.GridPointsStruct import GridPoints
+from package.collision import collision
+import random
 
-# run_and_save("Data", Grid.random_greedy, ns=range(3, 4), ds=range(2, 10))
-
-# run_and_save("Data", Grid.random_greedy, iters=5, ns=[10], ds=[2], ks=range(2, 10))
-graph("Data/random_greedy.JSON", runner="k", base=(10, 2, 2), stop_at=10)
-
-# print(res)
-# to_json_file()
-
-# graph("Data/random_greedy.JSON", runner="d", base=(3, 2, 2))
-
-# g = Grid(2, 3)
-# VP = GridPoints.fromGrid([], g)
-
-# n = 10
-# d = 2
-# k = 10
-
-# g = Grid(n=n, d=d)
-# s = g.random_greedy(allowed_in_line=k)
-# print(s[1])
-
-# new_data = [{
-#     "n": n,
-#     "d": d,
-#     "k": k,
-#     "avg_points": s[1],
-#     "total_runs": 2
-# }]
-
-# to_json_file("Data", new_data, alg="random_greedy")
-
-# # Define the filename for your JSON file
-# filename = "Data/random_greedy.JSON"
-
-# with open(filename, "r") as json_file:
-#     existing_data = json.load(json_file)
-
-# # Check if data for the given n, d, and k already exists
-# print(existing_data)
-# for new_item in new_data:
-#     found = False
-#     for item in existing_data:
-#         print(item)
-#         if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"]:
-#             item["avg_points"] = (item["avg_points"] * item["total_runs"] + new_item["avg_points"] * new_item["total_runs"]) / (item["total_runs"] + new_item["total_runs"])
-#             item["total_runs"] += new_item["total_runs"]
-#             found = True
-#             break
-#     if not found:
-#         existing_data.append(new_data)
-
-# # If data doesn't exist, add it to the existing data
+import itertools as it
+from copy import deepcopy
+import tqdm
+import time
 
 
-# # Write the updated data back to the file
 # with open(filename, "w") as json_file:
 #     json.dump(existing_data, json_file)
 
-# print("Data has been updated in", filename)
-# valid_points = GridPoints(g.getAllValidPoints(), n=n, d=d)
-# chosen_points = GridPoints([], n=n, d=d)
+# a = np.full((4,) * 2, fill_value=None, dtype=collision)
 
-# l: list[Point] = [Point(0, 0, n=3), Point(2, 0, n=3), Point(2, 1, n=3), Point(3, 0, n=3), Point(3, 3, n=3), Point(1, 2, n=3)]
-# l.extend([Point(3, 1, n=3), Point(1, 3, n=3), Point(0, 2, n=3), Point(2, 3, n=3), Point(1, 1, n=3)])
-# for point in l:
-#     added_point = valid_points.l[valid_points.m[tuple(point.cords)]]
-#     valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-#     chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 0, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(2, 3, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 3, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(1, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(1, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
+# for cords in it.product(range(4), repeat=2):
+#     c = cords[::-1]
+#     a[c] = collision()
+    
+# print(np.min(a))
+# i = 0
+# with tqdm.tqdm(total=10) as bar:
+#     while i < 10:
+#         i += 1
+#         bar.update(1)
+#         time.sleep(1)
+#         if i == 5:
+#             bar.update(-i)
+#             i = 0
+#         time.sleep(0.5)
 
 
-# print(valid_points)
-# print(chosen_points)
-# print("max: ", int(2 * math.pow(n, d - 1)), "points")
-# print(g.random_greedy())
-# graph_avg(Grid.random_greedy, iters = 10, ns=range(3, 5), ds=range(3, 4))
+# n = 3
+# d = 2
+# k = 2
 
-# g = Grid(3, 2)
-# VP = GridPoints(g.getAllValidPoints(), 3, 2)
+# print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
+# run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
+# run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
+# graph('Data/min_conflict.JSON', runner='n', base=(n, d, k), stop_at=10)
+# graph('Data/min_conflict.JSON', runner='k', base=(50, 2, 2), stop_at=20)
 
-# VP.remove(Point(0, 0))
-# VP.remove(Point(2, 2))
-# VP.remove(Point(1, 1))
+# g = Grid(n=n, d=d)
+# rg = g.random_greedy(sorted=True, allowed_in_line=k)
+# print(len(rg.chosen))
+# g.add_points(rg.chosen)
+# best = g.min_conflict(100, False, allowed_in_line=k, start_from=rg)
 
-# valid_points = GridPoints([Point(1, 2), Point(1, 0), Point(2, 0), Point(0, 1), Point(0, 2), Point(2, 1)], 3, 2)
+# g.add_points(best.chosen)
+# g.draw_grid()
 
-# print(valid_points == VP)
+# gp = GridPoints(n=n, d=d, k_in_line=k)
+# gp.add(Point(0, 0, n=n))
+# gp.add(Point(1, 1, n=n))
+# gp.add(Point(2, 2, n=n))
+
+# suspects = np.where(gp.collision_mat > 0)
+# print(suspects)
+# for j in range(len(suspects[0])):
+#     suspect_point = Point(*tuple([suspects[k][j] for k in range(d)]), n=n)
+
+
+# print(np.apply_over_axes(collision.num, gp.collision_mat, axes=[0,1]))
+# vectorized_func = np.vectorize(collision.num)
+# collision_count = vectorized_func(gp.collision_mat)
+# print(collision_count)
+# collision_count = vectorized_func(gp.conflicted)
+
+
+
+# a = np.array([[, np.inf], [1, 2]])
+# print(np.min(a))
+
+# conflicts = np.array([[True, False], [False, True]])
+# collision_mat = np.array([[3, 1], [3, 2]])
+# conflicts = np.where(conflicts, collision_mat, 0)
+# conflicts = conflicts / np.sum(conflicts)
+# print(conflicts)
+
+# min_conflict_points = np.array([[True, False], [False, True]])
+# indices = np.where(min_conflict_points)
+# random_index = tuple(random.choice(indices) for indices in min_conflict_points)
+# added_point = random.choice(indices)
+
+# print(random_index)
+# print(indices)
+
+# print(added_point)
+# gp: GridPoints = GridPoints(n=4, d=2, k_in_line=2)
+
+# gp.add(Point(1, 1, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(2, 2, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(1, 2, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+# gp.add(Point(2, 1, n=n))
+# print(gp)
+# print(gp.collision_mat[1, 1].lines)
+# print(gp.collision_mat[2, 2].lines)
+# print(gp.collision_mat[1, 2].lines)
+# print(gp.collision_mat[2, 1].lines)
+
+# gp.add_collision(Point(1, 1, n=n), [])
+
+# print(gp)
+
+# legal_collision = np.logical_and(gp.collision_mat > 0, gp.idx_mat <= 0)
+# l = np.where(legal_collision, gp.collision_mat, np.inf)
+# print(l)
+# # print(type(l[0, 0]))
+# print(np.argmin(l))
+# argmin_index = np.unravel_index(np.argmin(np.where(legal_collision, gp.collision_mat, np.inf)), gp.idx_mat.shape)
+# print(argmin_index)
+
+
+# legal_collision = np.array([[False, False], [True, True]])
+# mat = np.array([[2, 1], [2, 3]])
+# a = np.where(legal_collision, mat, np.inf)
+# argmin_index = np.unravel_index(np.argmin(a), a.shape)
+# print(argmin_index)
+
+
+# a = np.array([[True, False], [False, True]])
+# b = np.array([[2, 1], [3, 3]])
+
+# # Create a boolean mask where 'a' is False
+# mask = a
+
+# # Apply the mask to 'b' to filter out elements where 'a' is False
+# filtered_b = np.where(mask, b, np.inf)
+
+# # Find the indices of the minimum value in the filtered array
+# argmin_index = np.unravel_index(np.argmin(filtered_b), filtered_b.shape)
+
+# print("Indices of minimum value where 'a' is False:", argmin_index)

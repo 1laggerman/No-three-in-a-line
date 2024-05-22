@@ -1,11 +1,14 @@
 
-from .PointG import PointG as Point
-from .GridG import GridG as Grid
+from .Point import Point as Point
+from .Grid import Grid as Grid
+from .GridPointsStruct import GridPoints as GridPoints
 from typing import Callable
 import matplotlib.pyplot as plt
 import math
 import json
-from typing import TypedDict, List, Tuple, Iterable
+from typing import TypedDict, List
+import inspect
+# import tqdm
 
 class RunData(TypedDict):
     n: int
@@ -13,6 +16,7 @@ class RunData(TypedDict):
     k: int
     avg_points: float
     total_runs: int
+    args: json
     
 def precentile(data: RunData):
     max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
@@ -47,13 +51,19 @@ def graph(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 1
             
     print(data)
     print(axis)
+    fig = plt.figure(data_file.split('/')[-1].split('.')[0] + f" {others[0]}={values[0]}, {others[1]}={values[1]}")
+    ax = plt.gca()
+    # ax.set_xlim([xmin, xmax])
+    ax.spines['top'].set_visible(False)
+    ax.set_ylim([0, 1.01])
+    plt.title(f"{others[0]}={values[0]}, {others[1]}={values[1]}")
     plt.plot(axis, data)
     plt.xlabel(runner)
     plt.ylabel(func.__name__)
     plt.show()
     
 
-def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 10, ns = range(3, 10), ds=range(2, 3)):
+def graph_avg(func: Callable[..., GridPoints], *args, iters: int = 10, ns = range(3, 10), ds=range(2, 3)):
         results = []
         base = []
         for d in ds:
@@ -61,8 +71,8 @@ def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 
                 g = Grid(n, d)
                 sum = 0
                 for _ in range(iters):
-                    points, s = func(g, *args)
-                    sum += s
+                    gp = func(g, *args)
+                    sum += len(gp.chosen)
                 results.append(sum / iters)
                 base.append(math.pow(n, d))
                 print(f"finished n={n}, d={d}: {sum / iters}")
@@ -72,7 +82,7 @@ def graph_avg(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 
         plt.plot(results, base)
         plt.show()
         
-def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int = 10, rg = range(3, 10), base: int = 3):
+def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = range(3, 10), base: int = 3):
     results_n = []
     base_n = []
     
@@ -80,8 +90,8 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
         g = Grid(n, base)
         sum = 0
         for _ in range(iters):
-            points, s = func(g, *args)
-            sum += s
+            gp = func(g, *args)
+            sum += len(gp.chosen)
         results_n.append(sum / iters)
         base_n.append(math.pow(n, base))
     
@@ -93,33 +103,54 @@ def graph_cmpr(func: Callable[..., tuple[list[Point, int]]], *args, iters: int =
         g = Grid(base, d)
         sum = 0
         for _ in range(iters):
-            points, s = func(g, *args)
-            sum += s
+            gp = func(g, *args)
+            sum += len(gp.chosen)
         results_d.append(sum / iters)
         base_d.append(math.pow(base, d))
         
     plt.plot(results_d, base_d, color='red', label='d')
     plt.show()
+    
 
-def run(func: Callable[[Grid, bool, int, Tuple], tuple[list[Point, int]]], *args, iters: int = 5, ns: Iterable[int] = range(3, 10), ds: Iterable[int] = [3], ks: Iterable[int] = [2]):
+def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
-    for d in ds:
-        for n in ns:
-            for k in ks:
+    params_to_ignore = {'self', 'allowed_in_line', 'sorted', 'start_from'}
+    sig = inspect.signature(func)
+    func_params = {}
+    g = Grid(3, 2)
+    try:
+        bound_args = sig.bind(g, *args, **kwargs)
+        bound_args.apply_defaults()
+        func_params = {name: value for name, value in bound_args.arguments.items() if name not in params_to_ignore}
+    except:
+        print("failed to bind args, data will not record function arguments.")
+        i = input("press enter to continue, d for details or e to exit")
+        if i == 'd':
+            print('function arguments should be passed in the following format: run(n=3, d=2, k=2)')
+        elif i == 'e':
+            return
+        
+    
+    for k in ks:
+        for d in ds:
+            for n in ns:
                 g = Grid(n, d)
                 sum = 0
+                
+                print('staring run for n=', n, 'd=', d, 'k=', k)
+                
+                # for _ in tqdm(range(iters)):
                 for _ in range(iters):
-                    points, s = func(g, False, k, *args)
-                    sum += s
-                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters}
+                    gp = func(g, *args, allowed_in_line=k)
+                    sum += len(gp.chosen)
+                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters, "args": func_params}
                 data.append(res)
                 print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
     return data
 
-def run_and_save(file_path: str, func: Callable[[Grid, bool, int, Tuple], tuple[list[Point, int]]], *args, iters: int = 5, ns = range(3, 10), ds=range(2, 3), ks=[2]):
+def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
     data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks)
     to_json_file(file_path, data, func.__name__)
-    return data
 
 def to_json_file(file_path: str, new_data: list[RunData], alg: str):
     filename = file_path + "/" + alg + ".JSON"
@@ -129,13 +160,15 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
             existing_data: List[RunData] = json.load(json_file)
     except:
         existing_data = []
+    # with open(filename, "r") as json_file:
+    #     existing_data: List[RunData] = json.load(json_file)
 
     # Check if data for the given n, d, and k already exists
     add_to_data = []
     for new_item in new_data:
         found = False
         for item in existing_data:
-            if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"]:
+            if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"] and item["args"] == new_item["args"]:
                 item["avg_points"] = (item["avg_points"] * item["total_runs"] + new_item["avg_points"] * new_item["total_runs"]) / (item["total_runs"] + new_item["total_runs"])
                 item["total_runs"] += new_item["total_runs"]
                 found = True
