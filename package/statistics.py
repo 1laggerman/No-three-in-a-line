@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import math
 import json
 from typing import TypedDict, List
+import inspect
 # import tqdm
 
 class RunData(TypedDict):
@@ -15,6 +16,7 @@ class RunData(TypedDict):
     k: int
     avg_points: float
     total_runs: int
+    args: json
     
 def precentile(data: RunData):
     max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
@@ -110,19 +112,38 @@ def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = ran
     plt.show()
     
 
-def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
+def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
+    params_to_ignore = {'self', 'allowed_in_line', 'sorted', 'start_from'}
+    sig = inspect.signature(func)
+    func_params = {}
+    g = Grid(3, 2)
+    try:
+        bound_args = sig.bind(g, *args, **kwargs)
+        bound_args.apply_defaults()
+        func_params = {name: value for name, value in bound_args.arguments.items() if name not in params_to_ignore}
+    except:
+        print("failed to bind args, data will not record function arguments.")
+        i = input("press enter to continue, d for details or e to exit")
+        if i == 'd':
+            print('function arguments should be passed in the following format: run(n=3, d=2, k=2)')
+        elif i == 'e':
+            return
+        
+    
     for k in ks:
         for d in ds:
             for n in ns:
                 g = Grid(n, d)
                 sum = 0
+                
                 print('staring run for n=', n, 'd=', d, 'k=', k)
+                
                 # for _ in tqdm(range(iters)):
                 for _ in range(iters):
                     gp = func(g, *args, allowed_in_line=k)
                     sum += len(gp.chosen)
-                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters}
+                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters, "args": func_params}
                 data.append(res)
                 print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
     return data
@@ -147,7 +168,7 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
     for new_item in new_data:
         found = False
         for item in existing_data:
-            if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"]:
+            if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"] and item["args"] == new_item["args"]:
                 item["avg_points"] = (item["avg_points"] * item["total_runs"] + new_item["avg_points"] * new_item["total_runs"]) / (item["total_runs"] + new_item["total_runs"])
                 item["total_runs"] += new_item["total_runs"]
                 found = True

@@ -48,8 +48,12 @@ class Grid:
                                 
         return ValidPoints
     
-    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2):
-        gp: GridPoints = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2, start_from: GridPoints = None):
+        gp: GridPoints = None
+        if start_from is None:
+            gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
+        else:
+            gp = start_from
         
         while(len(gp.valid) != 0):
             added_point = random.choice(gp.valid)

@@ -4,7 +4,7 @@ import numpy as np
 from package.Point import Point as Point
 from package.Grid import Grid as Grid
 import json
-from package.statistics import to_json_file, run_and_save, graph, run
+from package.statistics import to_json_file, run_and_save, graph, run, RunData
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
 import random
@@ -13,6 +13,10 @@ import itertools as it
 from copy import deepcopy
 import tqdm
 import time
+
+
+# with open(filename, "w") as json_file:
+#     json.dump(existing_data, json_file)
 
 # a = np.full((4,) * 2, fill_value=None, dtype=collision)
 
@@ -33,14 +37,14 @@ import time
 #         time.sleep(0.5)
 
 
-n = 10
-d = 4
-k = 5
+# n = 3
+# d = 2
+# k = 2
 
 # print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
-run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
+# run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
 # run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
-# graph('Data/min_conflict.JSON', runner='n', base=(3, 2, 2), stop_at=20)
+# graph('Data/min_conflict.JSON', runner='n', base=(n, d, k), stop_at=10)
 # graph('Data/min_conflict.JSON', runner='k', base=(50, 2, 2), stop_at=20)
 
 # g = Grid(n=n, d=d)
