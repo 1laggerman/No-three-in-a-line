@@ -14,10 +14,6 @@ from copy import deepcopy
 import tqdm
 import time
 
-
-# with open(filename, "w") as json_file:
-#     json.dump(existing_data, json_file)
-
 # a = np.full((4,) * 2, fill_value=None, dtype=collision)
 
 # for cords in it.product(range(4), repeat=2):
