@@ -15,6 +15,7 @@ class RunData(TypedDict):
     d: int
     k: int
     avg_points: float
+    max_points: int
     total_runs: int
     args: json
     
@@ -135,15 +136,17 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
         for d in ds:
             for n in ns:
                 g = Grid(n, d)
-                sum = 0
-                
                 print('staring run for n=', n, 'd=', d, 'k=', k)
                 
-                # for _ in tqdm(range(iters)):
+                sum = 0
+                max_points = 0
                 for _ in range(iters):
                     gp = func(g, *args, allowed_in_line=k)
-                    sum += len(gp.chosen)
-                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "total_runs": iters, "args": func_params}
+                    num_points = len(gp.chosen)
+                    if num_points > max_points:
+                        max_points = num_points
+                    sum += num_points
+                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "max_points": max_points, "total_runs": iters, "args": func_params}
                 data.append(res)
                 print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
     return data
@@ -171,6 +174,8 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
             if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"] and item["args"] == new_item["args"]:
                 item["avg_points"] = (item["avg_points"] * item["total_runs"] + new_item["avg_points"] * new_item["total_runs"]) / (item["total_runs"] + new_item["total_runs"])
                 item["total_runs"] += new_item["total_runs"]
+                if item["max_points"] < new_item["max_points"]:
+                    item["max_points"] = new_item["max_points"]
                 found = True
                 break
         if not found:

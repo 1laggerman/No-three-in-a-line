@@ -33,13 +33,13 @@ import time
 #         time.sleep(0.5)
 
 
-# n = 3
-# d = 2
-# k = 2
+n = 3
+d = 2
+k = 2
 
 # print(run(func=Grid.min_conflict, ns=range(3, 5), ds=range(2, 4), ks=[2]))
 # run_and_save(file_path="Data", func=Grid.min_conflict, ns=[n], ds=[d], ks=range(k, k+3), iters=1)
-# run_and_save(file_path="Data", func=Grid.min_conflict, ns=[3], ds=range(2, 10), ks=[2], iters=10)
+run_and_save(file_path="Data", func=Grid.min_conflict, ns=range(2, 10), ds=[4], ks=[2], iters=5)
 # graph('Data/min_conflict.JSON', runner='n', base=(n, d, k), stop_at=10)
 # graph('Data/min_conflict.JSON', runner='k', base=(50, 2, 2), stop_at=20)
 
