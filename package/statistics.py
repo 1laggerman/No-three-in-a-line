@@ -8,7 +8,12 @@ import math
 import json
 from typing import TypedDict, List
 import inspect
-# import tqdm
+import sys
+import tqdm
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
 
 class RunData(TypedDict):
     n: int
@@ -17,7 +22,15 @@ class RunData(TypedDict):
     avg_points: float
     max_points: int
     total_runs: int
-    args: json
+    args: dict
+    
+def counter(n: int):
+    i = 0
+    try:
+        while i < n:
+            i += 1
+    except KeyboardInterrupt:
+        print('You pressed Ctrl+C!')
     
 def precentile(data: RunData):
     max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
@@ -131,24 +144,40 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
         elif i == 'e':
             return
         
-    
-    for k in ks:
-        for d in ds:
-            for n in ns:
-                g = Grid(n, d)
-                print('staring run for n=', n, 'd=', d, 'k=', k)
-                
-                sum = 0
-                max_points = 0
-                for _ in range(iters):
-                    gp = func(g, *args, allowed_in_line=k)
-                    num_points = len(gp.chosen)
-                    if num_points > max_points:
-                        max_points = num_points
-                    sum += num_points
-                res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "max_points": max_points, "total_runs": iters, "args": func_params}
-                data.append(res)
-                print(f"finished n={n}, d={d}, k={k}: {sum / iters}")
+    try:
+        for k in ks:
+            for d in ds:
+                for n in ns:
+                    g = Grid(n, d)
+                    print('staring run for n=', n, 'd=', d, 'k=', k)
+                    
+                    sum = 0
+                    max_points = 0
+                    for _ in tqdm.tqdm(range(iters)):
+                        gp = func(g, *args, allowed_in_line=k)
+                        num_points = len(gp.chosen)
+                        if num_points > max_points:
+                            max_points = num_points
+                        sum += num_points
+                    # with tqdm.tqdm(total=iters) as pbar:
+                    #     for _ in range(iters):
+                    #         gp = func(g, *args, allowed_in_line=k)
+                    #         num_points = len(gp.chosen)
+                    #         if num_points > max_points:
+                    #             max_points = num_points
+                    #         sum += num_points
+                    #         pbar.update(1)
+                    # for _ in range(iters):
+                    #     gp = func(g, *args, allowed_in_line=k)
+                    #     num_points = len(gp.chosen)
+                    #     if num_points > max_points:
+                    #         max_points = num_points
+                    #     sum += num_points
+                    res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "max_points": max_points, "total_runs": iters, "args": func_params}
+                    data.append(res)
+                    print(f"finished n={n}, d={d}, k={k}")
+    except KeyboardInterrupt:
+        print("interrupted by user, returning partial data")
     return data
 
 def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):

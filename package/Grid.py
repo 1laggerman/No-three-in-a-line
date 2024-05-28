@@ -75,7 +75,7 @@ class Grid:
         best_state = deepcopy(gp)
         iters = []
         i = 0
-        with tqdm.tqdm(total=max_iter) as bar:
+        with tqdm.tqdm(total=max_iter, position=1, leave=False) as bar:
             while i < max_iter and len(gp.chosen) < allowed_in_line * self.upper_bound:
                 i += 1
                 bar.update(1)
