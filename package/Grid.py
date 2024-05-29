@@ -70,6 +70,9 @@ class Grid:
             gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
         else:
             gp = start_from
+        
+        if allowed_in_line > self.n:
+            allowed_in_line = self.n
         vectorized_func = np.vectorize(collision.num)
             
         best_state = deepcopy(gp)

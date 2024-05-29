@@ -28,6 +28,6 @@ import tqdm
 
 # print(run(Grid.min_conflict, iters=10, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5)))
 
-run_and_save("Data", Grid.random_greedy, iters=10, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))
+# run_and_save("Data", Grid.random_greedy, iters=10, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))
 
-run_and_save("Data", Grid.min_conflict, iters=10, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))
+# run_and_save("Data", Grid.min_conflict, iters=5, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))

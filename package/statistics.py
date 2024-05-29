@@ -10,6 +10,7 @@ from typing import TypedDict, List
 import inspect
 import sys
 import tqdm
+import multiprocessing
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -177,7 +178,64 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
                     data.append(res)
                     print(f"finished n={n}, d={d}, k={k}")
     except KeyboardInterrupt:
-        print("interrupted by user, returning partial data")
+        print("interrupted by user, returning partial data: ")
+        print(data)
+    return data
+
+def worker(args):
+    n, d, k, iters, func, func_args = args
+    g = Grid(n, d)
+    print(f'starting run for n={n}, d={d}, k={k}')
+
+    sum_points = 0
+    max_points = 0
+    for _ in range(iters):
+        gp = func(g, *func_args, allowed_in_line=k)
+        num_points = len(gp.chosen)
+        if num_points > max_points:
+            max_points = num_points
+        sum_points += num_points
+
+    return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": func_args}
+
+def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+    data: List[RunData] = []
+    params_to_ignore = {'self', 'allowed_in_line', 'sorted', 'start_from'}
+    sig = inspect.signature(func)
+    func_params = {}
+    g = Grid(3, 2)
+    try:
+        bound_args = sig.bind(g, *args, **kwargs)
+        bound_args.apply_defaults()
+        func_params = {name: value for name, value in bound_args.arguments.items() if name not in params_to_ignore}
+    except:
+        print("failed to bind args, data will not record function arguments.")
+        i = input("press enter to continue, d for details or e to exit")
+        if i == 'd':
+            print('function arguments should be passed in the following format: run(n=3, d=2, k=2)')
+        elif i == 'e':
+            return
+        
+    func_args = func_params
+    num_processes = multiprocessing.cpu_count()  # Number of processes to use
+
+    pool = multiprocessing.Pool(processes=num_processes)
+    manager = multiprocessing.Manager()
+    queue = manager.Queue()
+
+    results = []
+
+    tasks = [(n, d, k, iters, func, func_args) for k in ks for d in ds for n in ns]
+    async_results = [pool.apply_async(worker, (task,), callback=lambda x: queue.put(x)) for task in tasks]
+
+    pool.close()
+    pool.join()
+
+    # Collect all results from the queue
+    while not queue.empty():
+        result = queue.get()
+        results.append(result)
+        print(f"finished n={result['n']}, d={result['d']}, k={result['k']}")
     return data
 
 def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
