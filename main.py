@@ -3,9 +3,10 @@ from timeit import default_timer as timer
 from package import Point, Grid as Point, Grid
 
 def __main__():
+    
     grid = Grid(n=10, d=2)
-    grid.add_point(Point(0, 0))
-    grid.draw_grid()
+    # grid.add_point(Point(0, 0))
+    # grid.draw_grid()
     
 
 

@@ -6,15 +6,12 @@ from typing import Callable
 import matplotlib.pyplot as plt
 import math
 import json
-from typing import TypedDict, List
+from typing import TypedDict, List, Any
 import inspect
 import sys
 import tqdm
 import multiprocessing
-
-def signal_handler(sig, frame):
-    print('You pressed Ctrl+C!')
-    sys.exit(0)
+import logging
 
 class RunData(TypedDict):
     n: int
@@ -25,13 +22,13 @@ class RunData(TypedDict):
     total_runs: int
     args: dict
     
-def counter(n: int):
-    i = 0
-    try:
-        while i < n:
-            i += 1
-    except KeyboardInterrupt:
-        print('You pressed Ctrl+C!')
+    
+dont_save_params = set([
+    'self',
+    'sorted',
+    'show_progress',
+    'allowed_in_line',    
+])
     
 def precentile(data: RunData):
     max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
@@ -129,104 +126,83 @@ def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = ran
 
 def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
-    params_to_ignore = {'self', 'allowed_in_line', 'sorted', 'start_from'}
-    sig = inspect.signature(func)
-    func_params = {}
-    g = Grid(3, 2)
+    func_args = bind_func_args(func, priority=[kwargs, {'sorted': False}], *args, **kwargs)
     try:
-        bound_args = sig.bind(g, *args, **kwargs)
-        bound_args.apply_defaults()
-        func_params = {name: value for name, value in bound_args.arguments.items() if name not in params_to_ignore}
+        del func_args['allowed_in_line']
     except:
-        print("failed to bind args, data will not record function arguments.")
-        i = input("press enter to continue, d for details or e to exit")
-        if i == 'd':
-            print('function arguments should be passed in the following format: run(n=3, d=2, k=2)')
-        elif i == 'e':
-            return
+        pass
+    
+    save_args = {name: value for name, value in func_args.items() if name not in dont_save_params}
         
     try:
         for k in ks:
             for d in ds:
                 for n in ns:
                     g = Grid(n, d)
-                    print('staring run for n=', n, 'd=', d, 'k=', k)
                     
                     sum = 0
                     max_points = 0
-                    for _ in tqdm.tqdm(range(iters)):
-                        gp = func(g, *args, allowed_in_line=k)
+                    for _ in tqdm.tqdm(range(iters), desc=f'{n}, {d}, {k}', leave=True):
+                        gp = func(g, **func_args, allowed_in_line=k)
                         num_points = len(gp.chosen)
                         if num_points > max_points:
                             max_points = num_points
                         sum += num_points
-                    # with tqdm.tqdm(total=iters) as pbar:
-                    #     for _ in range(iters):
-                    #         gp = func(g, *args, allowed_in_line=k)
-                    #         num_points = len(gp.chosen)
-                    #         if num_points > max_points:
-                    #             max_points = num_points
-                    #         sum += num_points
-                    #         pbar.update(1)
-                    # for _ in range(iters):
-                    #     gp = func(g, *args, allowed_in_line=k)
-                    #     num_points = len(gp.chosen)
-                    #     if num_points > max_points:
-                    #         max_points = num_points
-                    #     sum += num_points
-                    res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "max_points": max_points, "total_runs": iters, "args": func_params}
+                    res: RunData = {"n": n, "d": d, "k": k, "avg_points": sum / iters, "max_points": max_points, "total_runs": iters, "args": save_args}
                     data.append(res)
-                    print(f"finished n={n}, d={d}, k={k}")
     except KeyboardInterrupt:
         print("interrupted by user, returning partial data: ")
         print(data)
     return data
 
 def worker(args):
-    n, d, k, iters, func, func_args = args
+    i, n, d, k, iters, func, func_params, save_args = args
     g = Grid(n, d)
-    print(f'starting run for n={n}, d={d}, k={k}')
 
     sum_points = 0
     max_points = 0
-    for _ in range(iters):
-        gp = func(g, *func_args, allowed_in_line=k)
-        num_points = len(gp.chosen)
-        if num_points > max_points:
-            max_points = num_points
-        sum_points += num_points
-
-    return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": func_args}
+    
+    try:
+        with tqdm.tqdm(total=iters, position=i + 1, leave=True, desc=f'{n}, {d}, {k}') as bar:
+            for j in range(iters):
+                gp = func(g, **func_params, allowed_in_line=k)
+                num_points = len(gp.chosen)
+                if num_points > max_points:
+                    max_points = num_points
+                sum_points += num_points
+                bar.update(1)
+    except KeyboardInterrupt:
+        print("interrupted by user, returning partial data: ")
+        iters = j
+        
+    return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": save_args}
 
 def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
-    params_to_ignore = {'self', 'allowed_in_line', 'sorted', 'start_from'}
-    sig = inspect.signature(func)
-    func_params = {}
-    g = Grid(3, 2)
+    
+    func_args = bind_func_args(func, priority=[{'show_progress': False}, kwargs, {'sorted': False}], *args, **kwargs)
     try:
-        bound_args = sig.bind(g, *args, **kwargs)
-        bound_args.apply_defaults()
-        func_params = {name: value for name, value in bound_args.arguments.items() if name not in params_to_ignore}
+        del func_args['allowed_in_line']
     except:
-        print("failed to bind args, data will not record function arguments.")
-        i = input("press enter to continue, d for details or e to exit")
-        if i == 'd':
-            print('function arguments should be passed in the following format: run(n=3, d=2, k=2)')
-        elif i == 'e':
-            return
+        pass
+    
+    save_args = {name: value for name, value in func_args.items() if name not in dont_save_params}
         
-    func_args = func_params
-    num_processes = multiprocessing.cpu_count()  # Number of processes to use
+    num_processes = multiprocessing.cpu_count()
 
     pool = multiprocessing.Pool(processes=num_processes)
     manager = multiprocessing.Manager()
     queue = manager.Queue()
 
-    results = []
+    tasks = [(i, n, d, k, iters, func, func_args, save_args) for i, (k, d, n) in enumerate((k, d, n) for k in ks for d in ds for n in ns)]
+    # tasks = [(n, d, k, iters, func, func_args, save_args) for k in ks for d in ds for n in ns]
+    total_tasks = len(tasks)
+    with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:
+        for task in tasks:
+            pool.apply_async(worker, (task,), callback=lambda x: (queue.put(x), pbar.update(1)))
 
-    tasks = [(n, d, k, iters, func, func_args) for k in ks for d in ds for n in ns]
-    async_results = [pool.apply_async(worker, (task,), callback=lambda x: queue.put(x)) for task in tasks]
+        pool.close()
+        pool.join()
 
     pool.close()
     pool.join()
@@ -234,8 +210,7 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
     # Collect all results from the queue
     while not queue.empty():
         result = queue.get()
-        results.append(result)
-        print(f"finished n={result['n']}, d={result['d']}, k={result['k']}")
+        data.append(result)
     return data
 
 def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
@@ -250,8 +225,6 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
             existing_data: List[RunData] = json.load(json_file)
     except:
         existing_data = []
-    # with open(filename, "r") as json_file:
-    #     existing_data: List[RunData] = json.load(json_file)
 
     # Check if data for the given n, d, and k already exists
     add_to_data = []
@@ -272,3 +245,34 @@ def to_json_file(file_path: str, new_data: list[RunData], alg: str):
     # Write the updated data back to the file
     with open(filename, "w") as json_file:
         json.dump(existing_data, json_file)
+        
+def bind_func_args(func: Callable[..., GridPoints], priority: list[dict[str, Any]], *args, **kwargs) -> dict[str, Any]:
+    sig = inspect.signature(func)
+    g = Grid(3, 2) # default object required for binding
+    
+    try:
+        bound_args = sig.bind(g, *args, **kwargs) # bind function with default object
+        bound_args.apply_defaults() # apply default arguments
+        
+        func_args = {name: value for name, value in bound_args.arguments.items()} # dict of all default default arguments
+        
+        for i in range(1, len(priority)):
+            pos = len(priority) - i - 1
+            filtered_dict = {k: priority[pos][k] for k in priority[pos] if k in func_args}
+            func_args.update(filtered_dict)
+        
+        del func_args['self'] # remove self argument
+        
+    except:
+        logging.exception('Error accured while binding function arguments')
+        # print("")
+        print('\nthis Exception accured because the function arguments were not passed in the correct format.')
+        print('this is likely a cause of one of the following:\n')
+        print('\t1. type error in the name of an argument')
+        print('\t2. missmatching argument type. to avoid this use key=value syntax when passing arguments')
+        print('\t3. argument with no default value had no value passed in\n')
+        exit(1)
+        
+    return func_args
+    
+    

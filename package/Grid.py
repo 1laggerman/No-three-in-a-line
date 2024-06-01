@@ -48,7 +48,7 @@ class Grid:
                                 
         return ValidPoints
     
-    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2, start_from: GridPoints = None):
+    def random_greedy(self, sorted: bool = False, allowed_in_line: int = 2, start_from: GridPoints = None, show_progress: bool = False):
         gp: GridPoints = None
         if start_from is None:
             gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
@@ -64,7 +64,7 @@ class Grid:
         
         return gp
         
-    def min_conflict(self, max_iter: int = 100, sorted: bool = True, allowed_in_line: int = 2, start_from: GridPoints = None):
+    def min_conflict(self, max_iter: int = 100, sorted: bool = True, allowed_in_line: int = 2, start_from: GridPoints = None, show_progress: bool = True):
         gp: GridPoints = None
         if start_from is None:
             gp = GridPoints.fromGrid(self, k_in_line=allowed_in_line)
@@ -75,13 +75,14 @@ class Grid:
             allowed_in_line = self.n
         vectorized_func = np.vectorize(collision.num)
             
+        progress_bar = tqdm.tqdm(total=max_iter, leave=False, desc='iters without new point') if show_progress else NoOpProgressBar()
         best_state = deepcopy(gp)
-        iters = []
+        # iters = []
         i = 0
-        with tqdm.tqdm(total=max_iter, position=1, leave=False) as bar:
+        
+        # with tqdm.tqdm(total=max_iter, position=1, leave=False) as bar:
+        with progress_bar as bar:
             while i < max_iter and len(gp.chosen) < allowed_in_line * self.upper_bound:
-                i += 1
-                bar.update(1)
                 collision_count = vectorized_func(gp.collision_mat)
                 
                 # new valid point: collision_count = 0 and idx_mat <= 0
@@ -96,12 +97,14 @@ class Grid:
                 
                 if len(gp.conflicted) == 0 or min_conflict_value == 0:
                     best_state = deepcopy(gp)
-                    iters.append(i)
+                    # iters.append(i)
                     bar.update(-i)
                     i = 0
                 else:
                     c = random.choice(gp.conflicted)
                     gp.remove(c)
+                    bar.update(1)
+                    i += 1
         
         if sorted:
             gp.sort()
@@ -133,7 +136,7 @@ class Grid:
             print(mat[self.n - i - 1, :])
         
     # Grid functions:
-    def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off'):
+    def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off', draw=True):
         ticks = np.arange(0, self.n, 1)
         fig = plt.figure(figsize=(12, 10), dpi=80)
         if self.d == 2:
@@ -216,3 +219,16 @@ class Grid:
         point = Point(*point_coords, n=self.n)
         
         return point 
+    
+class NoOpProgressBar:
+    def update(self, n=1):
+        pass
+
+    def close(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
