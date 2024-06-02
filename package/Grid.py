@@ -136,81 +136,165 @@ class Grid:
             print(mat[self.n - i - 1, :])
         
     # Grid functions:
-    def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off', draw=True):
-        ticks = np.arange(0, self.n, 1)
-        fig = plt.figure(figsize=(12, 10), dpi=80)
-        if self.d == 2:
-            ax = plt.axes()
-        elif self.d == 3:
-            ax = plt.axes(projection='3d')
-            ax.set_zticks(ticks)
-            ax.set_zlim(0, self.n - 1)
+    # def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off', draw=True):
+    #     ticks = np.arange(0, self.n, 1)
+    #     fig = plt.figure(figsize=(12, 10), dpi=80)
+    #     if self.d == 2:
+    #         ax = plt.axes()
+    #     elif self.d == 3:
+    #         ax = plt.axes(projection='3d')
+    #         ax.set_zticks(ticks)
+    #         ax.set_zlim(0, self.n - 1)
             
+    #     ax.set_xticks(ticks)
+    #     ax.set_yticks(ticks)
+    #     # ax.set_xlim(-0.1, self.n - 0.9)
+    #     # ax.set_ylim(-0.1, self.n - 0.9)
+        
+        
+    #     if self.d == 2:
+    #         for x in range(self.n):
+    #             ax.plot([x, x], [0, self.n - 1], 'grey')
+    #         for y in range(self.n):
+    #             ax.plot([0, self.n - 1], [y, y], 'grey')
+
+    #         for point in self.points:
+    #             ax.scatter([point.coords[0]], [point.coords[1]], s=500, c='r', edgecolor='black', linewidth=2)	
+    #         if solutionID != [-1]:
+    #             for point in self.solutions[solutionID[0]]:
+    #                 ax.scatter([point.x], [point.y], color='black', s=250)
+            
+    #     elif self.d == 3:
+    #         # paint grid lines:
+            
+    #         # paint X-lines:
+    #         for y in range(self.n):
+    #             for z in range(self.n):
+    #                 ax.plot3D([0, self.n - 1], [y, y], [z, z], 'grey')
+            
+    #         # paint Y-lines:
+    #         for x in range(self.n):
+    #             for z in range(self.n):
+    #                 ax.plot3D([x, x], [0, self.n - 1], [z, z], 'grey')
+            
+    #         # paint Z-lines:
+    #         for x in range(self.n):
+    #             for y in range(self.n):
+    #                 ax.plot3D([x, x], [y, y], [0, self.n - 1], 'grey')        
+
+    #         # paint lines from (0, 0 ,0) to visualize directions:
+    #         ax.plot3D([0, self.n - 1], [0, 0], [0, 0], 'red') # paint red to visualize X axis
+    #         ax.plot3D([0, 0], [0, self.n - 1], [0, 0], 'green') # green to visualize Y axis
+    #         ax.plot3D([0, 0], [0, 0], [0, self.n - 1], 'blue') # blue to visualize Z axis
+            
+    #         for point in self.points: # paint all dots on grid
+    #             ax.scatter([point.coords[0]], [point.coords[1]], [point.coords[2]], color='black', s=250)
+    #         if solutionID[0] != -1:
+    #             z = 0
+    #             for s in solutionID:
+    #                 for point in self.solutions[s][1]:
+    #                     ax.scatter([point.x], [point.y], [z], color='black', s=250)
+    #                 z = z + 1
+            
+    #     else:
+    #         print('figure cannot be shown for %d dimentions'.format(self.d))
+            
+    #     if axis == 'off':
+    #         plt.axis('off')
+    #     else:
+    #         ax.set_xlabel('X axis')
+    #         ax.set_ylabel('Y axis')
+    #         if self.d == 3:
+    #             ax.set_zlabel('Z axis')
+            
+    #     # manager = plt.get_current_fig_manager()
+    #     # manager.full_screen_toggle()
+    #     # ax.margins(0.02)
+    #     plt.show()
+    
+    def draw_grid(self, solutionID: list[int] = [-1], axis: str ='off'):
+        ax = self.make_grid(solutionID, axis)
+        plt.show()
+        
+    # def make_grid(self, solutionID: list[int] = [-1], axis: str ='off'):
+        # ticks = np.arange(0, self.n, 1)
+        # fig, ax = plt.subplots(figsize=(12, 10), dpi=80, subplot_kw={'projection': '3d'} if self.d == 3 else None)
+
+        # ax.set_xticks(ticks)
+        # ax.set_yticks(ticks)
+        # if self.d == 3:
+        #     ax.set_zticks(ticks)
+        #     ax.set_zlim(0, self.n - 1)
+
+        # if self.d == 2:
+        #     self.plot_2d_grid(ax, solutionID)
+        # elif self.d == 3:
+        #     self.plot_3d_grid(ax, solutionID)
+        # else:
+        #     print(f'Grid cannot be shown for {self.d} dimensions')
+
+        # if axis == 'off':
+        #     ax.axis('off')
+        # else:
+        #     ax.set_xlabel('X axis')
+        #     ax.set_ylabel('Y axis')
+        #     if self.d == 3:
+        #         ax.set_zlabel('Z axis')
+
+        # return ax  # Return the Axes object instead of showing it
+        
+    def make_grid(self, ax, solution: GridPoints = None, axis: str ='off'):
+        ticks = np.arange(0, self.n, 1)
         ax.set_xticks(ticks)
         ax.set_yticks(ticks)
-        # ax.set_xlim(-0.1, self.n - 0.9)
-        # ax.set_ylim(-0.1, self.n - 0.9)
-        
-        
+        if self.d == 3:
+            ax.set_zticks(ticks)
+            ax.set_zlim(0, self.n - 1)
+
         if self.d == 2:
-            for x in range(self.n):
-                ax.plot([x, x], [0, self.n - 1], 'grey')
-            for y in range(self.n):
-                ax.plot([0, self.n - 1], [y, y], 'grey')
-
-            for point in self.points:
-                ax.scatter([point.coords[0]], [point.coords[1]], s=500, c='r', edgecolor='black', linewidth=2)	
-            if solutionID != [-1]:
-                for point in self.solutions[solutionID[0]]:
-                    ax.scatter([point.x], [point.y], color='black', s=250)
-            
+            self.plot_2d_grid(ax, solution)
         elif self.d == 3:
-            # paint grid lines:
-            
-            # paint X-lines:
-            for y in range(self.n):
-                for z in range(self.n):
-                    ax.plot3D([0, self.n - 1], [y, y], [z, z], 'grey')
-            
-            # paint Y-lines:
-            for x in range(self.n):
-                for z in range(self.n):
-                    ax.plot3D([x, x], [0, self.n - 1], [z, z], 'grey')
-            
-            # paint Z-lines:
-            for x in range(self.n):
-                for y in range(self.n):
-                    ax.plot3D([x, x], [y, y], [0, self.n - 1], 'grey')        
-
-            # paint lines from (0, 0 ,0) to visualize directions:
-            ax.plot3D([0, self.n - 1], [0, 0], [0, 0], 'red') # paint red to visualize X axis
-            ax.plot3D([0, 0], [0, self.n - 1], [0, 0], 'green') # green to visualize Y axis
-            ax.plot3D([0, 0], [0, 0], [0, self.n - 1], 'blue') # blue to visualize Z axis
-            
-            for point in self.points: # paint all dots on grid
-                ax.scatter([point.coords[0]], [point.coords[1]], [point.coords[2]], color='black', s=250)
-            if solutionID[0] != -1:
-                z = 0
-                for s in solutionID:
-                    for point in self.solutions[s][1]:
-                        ax.scatter([point.x], [point.y], [z], color='black', s=250)
-                    z = z + 1
-            
+            self.plot_3d_grid(ax, solution)
         else:
-            print('figure cannot be shown for %d dimentions'.format(self.d))
-            
+            print(f'Grid cannot be shown for {self.d} dimensions')
+
         if axis == 'off':
-            plt.axis('off')
+            ax.axis('off')
         else:
             ax.set_xlabel('X axis')
             ax.set_ylabel('Y axis')
             if self.d == 3:
                 ax.set_zlabel('Z axis')
-            
-        # manager = plt.get_current_fig_manager()
-        # manager.full_screen_toggle()
-        # ax.margins(0.02)
-        plt.show()
+
+    def plot_2d_grid(self, ax, solution: GridPoints):
+        for x in range(self.n):
+            ax.plot([x, x], [0, self.n - 1], 'grey')
+        for y in range(self.n):
+            ax.plot([0, self.n - 1], [y, y], 'grey')
+
+        for point in self.points:
+            ax.scatter([point.coords[0]], [point.coords[1]], s=500, c='r', edgecolor='black', linewidth=2)  
+        if solution != None:
+            for point in solution.chosen:
+                ax.scatter([point.coords[0]], [point.coords[1]], color='black', s=250)
+
+    def plot_3d_grid(self, ax, solution: GridPoints):
+        # Paint grid lines for X, Y, and Z directions
+        for y in range(self.n):
+            for z in range(self.n):
+                ax.plot3D([0, self.n - 1], [y, y], [z, z], 'grey')
+        for x in range(self.n):
+            for z in range(self.n):
+                ax.plot3D([x, x], [0, self.n - 1], [z, z], 'grey')
+        for x in range(self.n):
+            for y in range(self.n):
+                ax.plot3D([x, x], [y, y], [0, self.n - 1], 'grey')
+
+        for point in self.points:
+            ax.scatter([point.coords[0]], [point.coords[1]], [point.coords[2]], color='black', s=250)
+        if solution != None:
+            for point in solution.chosen:
+                ax.scatter([point.coords[0]], [point.coords[1]], [point.coords[2]], color='black', s=250)
         
     def choose(self, condition: np.ndarray):
         choose_from = np.where(condition)

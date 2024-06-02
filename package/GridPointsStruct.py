@@ -198,6 +198,8 @@ class GridPoints():
         return str(self)
     
     def __eq__(self, other: "GridPoints") -> bool:
+        if other is None:
+            return False
         return np.all(self.idx_mat == other.idx_mat) and np.all(self.collision_mat == other.collision_mat) and self.chosen == other.chosen and self.valid == other.valid
     
     def __iter__(self):

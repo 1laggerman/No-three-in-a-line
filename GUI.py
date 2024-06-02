@@ -38,6 +38,10 @@ class GridConfigApp(tk.Tk):
         ttk.Label(self.config_frame, text="d:").grid(row=1, column=0, padx=5, pady=5)
         self.d_input = ttk.Entry(self.config_frame, width=10)
         self.d_input.grid(row=1, column=1, padx=5, pady=5)
+        
+        ttk.Label(self.config_frame, text="k:").grid(row=2, column=0, padx=5, pady=5)
+        self.k_input = ttk.Entry(self.config_frame, width=10)
+        self.k_input.grid(row=2, column=1, padx=5, pady=5)
 
         # Algorithm Selection
         self.algo_frame = ttk.LabelFrame(left_frame, text="Select Algorithm")
@@ -97,44 +101,46 @@ class GridConfigApp(tk.Tk):
         self.plot_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
 
         # Placeholder for Matplotlib Figure
-        self.figure = plt.Figure(figsize=(5, 4), dpi=100)
-        self.ax = self.figure.add_subplot(111)  # Adding a subplot
+        # self.figure = plt.Figure(figsize=(5, 4), dpi=100)
+        # self.ax = self.figure.add_subplot(111)  # Adding a subplot
+        try:
+            d = int(self.d_input.get())
+        except:
+            d = 2
+            pass
+        self.figure, self.ax = plt.subplots(figsize=(5, 4), dpi=80, subplot_kw={'projection': '3d'} if d == 3 else None)
         self.ax.grid(True)  # Enable grid
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def run_algorithm(self):
+        self.create_plot()
         n = int(self.n_input.get())
         d = int(self.d_input.get())
         k = int(self.k_input.get())
         
         g = Grid(n, d)
-        
         algorithm = self.algo_var.get()
-        
         gp = None
         
         if algorithm =='max_solutions':
             # self.run_max_solutions(n, d)
             pass
         elif algorithm == 'random_greedy':
-            gp = g.random_greedy(allowed_in_line=k)
+            if not self.toggle_button.config('text')[-1] == 'Single Run Mode':
+                gp = g.random_greedy(allowed_in_line=k)
         elif algorithm =='min_conflict':
-            gp = g.min_conflict(allowed_in_line=k)
-            
-        
+            if not self.toggle_button.config('text')[-1] == 'Single Run Mode':
+                gp = g.min_conflict(allowed_in_line=k)
 
         # Example of plotting something based on the algorithm
         # Clear the current plot
         self.ax.clear()
         self.ax.grid(True)
 
-        # Here you would include your actual algorithm logic and plotting
-        self.ax.plot([0, n], [0, d], label="Example Line")
-        self.ax.legend()
-
-        # Refresh the plot
+        # Generate the grid plot and integrate with Tkinter's Canvas
+        g.make_grid(self.ax, gp)
         self.canvas.draw()
 
 # Create and run the application
