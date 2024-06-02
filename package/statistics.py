@@ -163,17 +163,18 @@ def worker(args):
     max_points = 0
     
     try:
-        with tqdm.tqdm(total=iters, position=i + 1, leave=True, desc=f'{n}, {d}, {k}') as bar:
+        # with tqdm.tqdm(total=iters, position=i + 1, leave=True, desc=f'{n}, {d}, {k}') as bar:
             for j in range(iters):
                 gp = func(g, **func_params, allowed_in_line=k)
                 num_points = len(gp.chosen)
                 if num_points > max_points:
                     max_points = num_points
                 sum_points += num_points
-                bar.update(1)
+                # bar.update(1)
     except KeyboardInterrupt:
         print("interrupted by user, returning partial data: ")
         iters = j
+        pass
         
     return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": save_args}
 
@@ -213,8 +214,12 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
         data.append(result)
     return data
 
-def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2]):
-    data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks)
+def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], parallel=False,  **kwargs) -> None:
+    data: list[RunData] = []
+    if parallel:
+        data = run_parallel(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
+    else:
+        data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
     to_json_file(file_path, data, func.__name__)
 
 def to_json_file(file_path: str, new_data: list[RunData], alg: str):

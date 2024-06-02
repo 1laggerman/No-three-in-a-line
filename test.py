@@ -64,17 +64,17 @@ def counter(n: int):
 
 # Example usage
 if __name__ == "__main__":
-    ks = [2]
-    ds = [2]
-    ns = range(3, 20)
-    iters = 10
+    ks = [2, 3, 4]
+    ds = [2, 3, 4]
+    ns = range(3, 11)
+    iters = 5
     func = Grid.min_conflict  # Replace 'some_function' with the actual function you intend to use
     # func_args = ()  # Replace these with actual arguments for 'func'
 
 
     # bind_func_args(func, priority=[{'sorted': False, 'max_iter': 50}, {'max_iter': 150, 'abc': 5, 'a': 5}], max_iter=100, allowed_in_line=5)
-    # results = run_parallel(func=func, ks=ks, ds=ds, ns=ns, iters=iters, allowed_in_line=5)
-    results = run(func=func, ks=ks, ds=ds, ns=ns, iters=iters, max_iter=150)
+    # results = run_parallel(func=func, ks=ks, ds=ds, ns=ns, iters=iters)
+    results = run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
     print(results)
 
 
