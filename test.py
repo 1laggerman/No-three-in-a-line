@@ -74,8 +74,8 @@ if __name__ == "__main__":
 
     # bind_func_args(func, priority=[{'sorted': False, 'max_iter': 50}, {'max_iter': 150, 'abc': 5, 'a': 5}], max_iter=100, allowed_in_line=5)
     # results = run_parallel(func=func, ks=ks, ds=ds, ns=ns, iters=iters)
-    results = run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
-    print(results)
+    run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
+    # print(results)
 
 
 

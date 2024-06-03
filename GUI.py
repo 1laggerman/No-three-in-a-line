@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from package.Grid import Grid as Grid
+from package.statistics import graph, run_and_save
 
 # Define the main application class
 class GridConfigApp(tk.Tk):
@@ -12,6 +13,7 @@ class GridConfigApp(tk.Tk):
         self.title("Grid Configuration Tool")
         self.geometry("1080x720")  # Wider window to accommodate the plot
         self.is_range = False
+        self.range_inputs = {}
 
         # Initialize the user interface
         self.create_widgets()
@@ -60,6 +62,7 @@ class GridConfigApp(tk.Tk):
         # Clear existing widgets
         for widget in self.config_frame.winfo_children():
             widget.destroy()
+        self.range_inputs.clear()
 
         if not self.toggle_button.config('text')[-1] == 'Single Run Mode':
             # Switch to range inputs using entry fields
@@ -85,7 +88,7 @@ class GridConfigApp(tk.Tk):
             
     def init_range_inputs(self):
         for var, row in [('n', 0), ('d', 3), ('k', 6)]:
-            ttk.Label(self.config_frame, text=f"{var} range:").grid(row=row, column=0, padx=5, pady=5, columnspan=2)
+            ttk.Label(self.config_frame, text=f"{var} range:").grid(row=row, column=0, padx=5, pady=5, columnspan=3)
             min_label = ttk.Label(self.config_frame, text="Min:")
             min_label.grid(row=row+1, column=0, padx=5, pady=2)
             min_entry = ttk.Entry(self.config_frame, width=10)
@@ -94,6 +97,8 @@ class GridConfigApp(tk.Tk):
             max_label.grid(row=row+1, column=2, padx=5, pady=2)
             max_entry = ttk.Entry(self.config_frame, width=10)
             max_entry.grid(row=row+1, column=3, padx=5, pady=2)
+            
+            self.range_inputs[var] = {'min': min_entry, 'max': max_entry}
 
     def create_plot(self):
         # Plotting Frame on the Right
@@ -115,32 +120,54 @@ class GridConfigApp(tk.Tk):
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def run_algorithm(self):
-        self.create_plot()
-        n = int(self.n_input.get())
-        d = int(self.d_input.get())
-        k = int(self.k_input.get())
-        
-        g = Grid(n, d)
         algorithm = self.algo_var.get()
-        gp = None
         
-        if algorithm =='max_solutions':
-            # self.run_max_solutions(n, d)
-            pass
-        elif algorithm == 'random_greedy':
-            if not self.toggle_button.config('text')[-1] == 'Single Run Mode':
+        if self.toggle_button.config('text')[-1] == 'Single Run Mode':
+            values = {}
+            for var, entries in self.range_inputs.items():
+                min_value = int(entries['min'].get())
+                max_value = int(entries['max'].get())
+                values[var] = (min_value, max_value, True if min_value < max_value else False)
+                
+            ks = range(values['k'][0], values['k'][1]+1)
+            runner = 'k'
+            ds = range(values['d'][0], values['d'][1]+1)
+            if values['d'][2] == True:
+                runner = 'd'
+            ns = range(values['n'][0], values['n'][1]+1)
+            if values['n'][2] == True:
+                runner = 'n'
+                
+            if algorithm == 'max_solutions':
+                pass
+            elif algorithm == 'random_greedy':
+                run_and_save('Data', Grid.random_greedy, ns=ns, ds=ds, ks=ks, parallel=False)
+            elif algorithm == 'min_conflict':
+                run_and_save('Data', Grid.min_conflict, ns=ns, ds=ds, ks=ks, parallel=False)
+                
+            graph(f'Data/{algorithm}', runner=runner, base=(values['n'][0], values['d'][0], values['k'][0]))
+                    
+        else:
+            self.create_plot()
+            n = int(self.n_input.get())
+            d = int(self.d_input.get())
+            k = int(self.k_input.get())
+            g = Grid(n, d)
+            gp = None
+            
+            if algorithm == 'max_solutions':
+                # self.run_max_solutions(n, d)
+                pass
+            elif algorithm == 'random_greedy':
                 gp = g.random_greedy(allowed_in_line=k)
-        elif algorithm =='min_conflict':
-            if not self.toggle_button.config('text')[-1] == 'Single Run Mode':
+            elif algorithm == 'min_conflict':
                 gp = g.min_conflict(allowed_in_line=k)
+                
+            # Clear the current plot
+            self.ax.clear()
+            self.ax.grid(True)
+            g.make_grid(self.ax, gp)
 
-        # Example of plotting something based on the algorithm
-        # Clear the current plot
-        self.ax.clear()
-        self.ax.grid(True)
-
-        # Generate the grid plot and integrate with Tkinter's Canvas
-        g.make_grid(self.ax, gp)
         self.canvas.draw()
 
 # Create and run the application

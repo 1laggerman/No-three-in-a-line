@@ -178,6 +178,73 @@ def worker(args):
         
     return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": save_args}
 
+def w(args):
+    i, n, d, k, func, func_params = args
+    g = Grid(n, d)
+    
+    try:
+        gp: GridPoints = func(g, **func_params, allowed_in_line=k)
+        num_points = len(gp.chosen)
+    except KeyboardInterrupt:
+        return (i, None)
+        
+    return (i, num_points)
+
+def r_p(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+    data: List[RunData] = []
+
+    func_args = bind_func_args(func, priority=[{'show_progress': False}, kwargs, {'sorted': False}], *args, **kwargs)
+    try:
+        del func_args['allowed_in_line']
+    except:
+        pass
+
+    save_args = {name: value for name, value in func_args.items() if name not in dont_save_params}
+    
+    num_processes = multiprocessing.cpu_count()
+
+    pool = multiprocessing.Pool(processes=num_processes)
+    manager = multiprocessing.Manager()
+    queue = manager.Queue()
+    
+    jobs = [(n, d, k) for k in ks for d in ds for n in ns]
+    
+    jobs.sort(key=lambda j: math.pow(j[0], j[1]) / j[2], reverse=True) # sort so the heaviest tasks are first.
+    
+    jobs = enumerate(jobs)
+    
+    results = []
+    for i, (n, d, k) in jobs:
+        results.append({"n": n, "d": d, "k": k, "avg_points": 0, "max_points": 0, "total_runs": 0, "args": save_args})
+
+    tasks = [(i, n, d, k, func, func_args, save_args) for i, (n, d, k) in jobs for _ in range(iters)]
+    
+    total_tasks = len(tasks)
+    with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:
+        for task in tasks:
+            pool.apply_async(worker, (task,), callback=lambda x: (queue.put(x), pbar.update(1)))
+
+        pool.close()
+        pool.join()
+
+    pool.close()
+    pool.join()
+
+    # Collect all results from the queue
+    while not queue.empty():
+        result = queue.get()
+        data.append(result)
+        
+    for i, num in data:
+        if num is not None:
+            total = results[i]["total_runs"]
+            results[i]["avg_points"] = (results[i]["avg_points"] * total + num) / total + 1
+            results[i]["max_points"] = max(results[i]["max_points"], num)
+            results[i]["total_runs"] += 1
+            
+    return data
+    
+
 def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
     
@@ -194,9 +261,12 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
     pool = multiprocessing.Pool(processes=num_processes)
     manager = multiprocessing.Manager()
     queue = manager.Queue()
+    
+    jobs = [(n, d, k) for k in ks for d in ds for n in ns]
+    jobs.sort(key=lambda j: math.pow(j[0], j[1]) / j[2], reverse=True) # sort so the heaviest tasks are first.
 
-    tasks = [(i, n, d, k, iters, func, func_args, save_args) for i, (k, d, n) in enumerate((k, d, n) for k in ks for d in ds for n in ns)]
-    # tasks = [(n, d, k, iters, func, func_args, save_args) for k in ks for d in ds for n in ns]
+    tasks = [(i, n, d, k, iters, func, func_args, save_args) for i, (n, d, k) in enumerate(jobs)]
+    
     total_tasks = len(tasks)
     with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:
         for task in tasks:
@@ -279,5 +349,3 @@ def bind_func_args(func: Callable[..., GridPoints], priority: list[dict[str, Any
         exit(1)
         
     return func_args
-    
-    
