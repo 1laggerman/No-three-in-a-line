@@ -12,6 +12,7 @@ import sys
 import tqdm
 import multiprocessing
 import logging
+import time
 
 class RunData(TypedDict):
     n: int
@@ -30,16 +31,41 @@ dont_save_params = set([
     'allowed_in_line',    
 ])
     
-def precentile(data: RunData):
+def avg_precentile(data: RunData):
     max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
     return data["avg_points"] / max_points
 
-def graph(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 10, func: Callable[[RunData], float] = precentile):
+def avg_points(data: RunData):
+    return data["avg_points"]
+
+def max_precentile(data: RunData):
+    max_points = data["k"] * math.pow(data["n"], data["d"] - 1)
+    return data["max_points"] / max_points
+
+def max_points(data: RunData):
+    return data["max_points"]
+
+def scatter(data: list[RunData], show: tuple[bool] = (True, True)):
+    for elemnt in data:
+        if show[0]:
+            plt.scatter(elemnt["n"], elemnt["avg_points"], c='r')
+        if show[1]:
+            plt.scatter(elemnt["n"], elemnt["max_points"], c='b')
+            
+# def make_plot()
+
+def plot_line(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 10, func: Callable[[RunData], float] = max_points):
     try:
         with open(data_file, "r") as json_file:
             existing_data: List[RunData] = json.load(json_file)
     except:
         return
+    
+    mapping = {
+        "n": 0,
+        "d": 1,
+        "k": 2,
+    }
     others = []
     values = ()
     if runner == "n":
@@ -57,17 +83,20 @@ def graph(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int = 1
     data = []
     axis = []
     for item in existing_data:
-        if item[others[0]] == values[0] and item[others[1]] == values[1] and item[runner] < stop_at:
-            data.append(func(item))
-            axis.append(item[runner])
+        if item[others[0]] == values[0] and item[others[1]] == values[1] and item[runner] < stop_at and item[runner] >= base[mapping[runner]]:
+            data.append((func(item), item[runner]))
+            # data.append(func(item))
             
+    data.sort(key=lambda x: x[1])
+    axis = [x[1] for x in data]
+    data = [x[0] for x in data]
     print(data)
     print(axis)
     fig = plt.figure(data_file.split('/')[-1].split('.')[0] + f" {others[0]}={values[0]}, {others[1]}={values[1]}")
     ax = plt.gca()
     # ax.set_xlim([xmin, xmax])
     ax.spines['top'].set_visible(False)
-    ax.set_ylim([0, 1.01])
+    # ax.set_ylim([0, 1.01])
     plt.title(f"{others[0]}={values[0]}, {others[1]}={values[1]}")
     plt.plot(axis, data)
     plt.xlabel(runner)
@@ -124,7 +153,7 @@ def graph_cmpr(func: Callable[..., GridPoints], *args, iters: int = 10, rg = ran
     plt.show()
     
 
-def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+def run_linear(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
     func_args = bind_func_args(func, priority=[kwargs, {'sorted': False}], *args, **kwargs)
     try:
@@ -134,6 +163,7 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
     
     save_args = {name: value for name, value in func_args.items() if name not in dont_save_params}
         
+    start_time = time.time()
     try:
         for k in ks:
             for d in ds:
@@ -142,6 +172,7 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
                     
                     sum = 0
                     max_points = 0
+                    
                     for _ in tqdm.tqdm(range(iters), desc=f'{n}, {d}, {k}', leave=True):
                         gp = func(g, **func_args, allowed_in_line=k)
                         num_points = len(gp.chosen)
@@ -153,9 +184,11 @@ def run(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
     except KeyboardInterrupt:
         print("interrupted by user, returning partial data: ")
         print(data)
+    end_time = time.time()
+    print("total time: ", end_time - start_time)
     return data
 
-def worker(args):
+def batch_worker(args):
     i, n, d, k, iters, func, func_params, save_args = args
     g = Grid(n, d)
 
@@ -178,7 +211,7 @@ def worker(args):
         
     return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": save_args}
 
-def w(args):
+def worker(args):
     i, n, d, k, func, func_params = args
     g = Grid(n, d)
     
@@ -190,9 +223,9 @@ def w(args):
         
     return (i, num_points)
 
-def r_p(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+    
     data: List[RunData] = []
-
     func_args = bind_func_args(func, priority=[{'show_progress': False}, kwargs, {'sorted': False}], *args, **kwargs)
     try:
         del func_args['allowed_in_line']
@@ -207,17 +240,19 @@ def r_p(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
     manager = multiprocessing.Manager()
     queue = manager.Queue()
     
+    time_start = time.time()
+    
     jobs = [(n, d, k) for k in ks for d in ds for n in ns]
     
     jobs.sort(key=lambda j: math.pow(j[0], j[1]) / j[2], reverse=True) # sort so the heaviest tasks are first.
     
-    jobs = enumerate(jobs)
+    jobs = [(i, (n, d, k)) for i, (n, d, k) in enumerate(jobs)]
     
     results = []
     for i, (n, d, k) in jobs:
         results.append({"n": n, "d": d, "k": k, "avg_points": 0, "max_points": 0, "total_runs": 0, "args": save_args})
 
-    tasks = [(i, n, d, k, func, func_args, save_args) for i, (n, d, k) in jobs for _ in range(iters)]
+    tasks = [(i, n, d, k, func, func_args) for i, (n, d, k) in jobs for _ in range(iters)]
     
     total_tasks = len(tasks)
     with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:
@@ -229,6 +264,8 @@ def r_p(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
 
     pool.close()
     pool.join()
+    
+    time_end = time.time()
 
     # Collect all results from the queue
     while not queue.empty():
@@ -238,14 +275,16 @@ def r_p(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10
     for i, num in data:
         if num is not None:
             total = results[i]["total_runs"]
-            results[i]["avg_points"] = (results[i]["avg_points"] * total + num) / total + 1
+            results[i]["avg_points"] = (results[i]["avg_points"] * total + num) / (total + 1)
             results[i]["max_points"] = max(results[i]["max_points"], num)
             results[i]["total_runs"] += 1
             
-    return data
+    print("total time: ", time_end - time_start)
+            
+    return results
     
 
-def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
+def run_batch_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], **kwargs) -> List[RunData]:
     data: List[RunData] = []
     
     func_args = bind_func_args(func, priority=[{'show_progress': False}, kwargs, {'sorted': False}], *args, **kwargs)
@@ -262,6 +301,8 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
     manager = multiprocessing.Manager()
     queue = manager.Queue()
     
+    time_start = time.time()
+    
     jobs = [(n, d, k) for k in ks for d in ds for n in ns]
     jobs.sort(key=lambda j: math.pow(j[0], j[1]) / j[2], reverse=True) # sort so the heaviest tasks are first.
 
@@ -270,7 +311,7 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
     total_tasks = len(tasks)
     with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:
         for task in tasks:
-            pool.apply_async(worker, (task,), callback=lambda x: (queue.put(x), pbar.update(1)))
+            pool.apply_async(batch_worker, (task,), callback=lambda x: (queue.put(x), pbar.update(1)))
 
         pool.close()
         pool.join()
@@ -278,18 +319,22 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
     pool.close()
     pool.join()
 
+    time_end = time.time()
     # Collect all results from the queue
     while not queue.empty():
         result = queue.get()
         data.append(result)
+        
+    print("total time: ", time_end - time_start)
     return data
 
-def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], parallel=False,  **kwargs) -> None:
+def run_and_save(file_path: str, func: Callable[..., GridPoints], *args, iters: int = 5, ns = range(3, 10), ds=[2], ks=[2], parallel=False, **kwargs) -> None:
     data: list[RunData] = []
     if parallel:
         data = run_parallel(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
+        # data = run_batch_parallel(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
     else:
-        data = run(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
+        data = run_linear(func, *args, iters=iters, ns=ns, ds=ds, ks=ks, **kwargs)
     to_json_file(file_path, data, func.__name__)
 
 def to_json_file(file_path: str, new_data: list[RunData], alg: str):

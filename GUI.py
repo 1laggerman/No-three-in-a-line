@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from package.Grid import Grid as Grid
-from package.statistics import graph, run_and_save
+from package.statistics import plot_line, run_and_save, run_linear, scatter, RunData
 
 # Define the main application class
 class GridConfigApp(tk.Tk):
@@ -14,6 +14,7 @@ class GridConfigApp(tk.Tk):
         self.geometry("1080x720")  # Wider window to accommodate the plot
         self.is_range = False
         self.range_inputs = {}
+        self.protocol("WM_DELETE_WINDOW", self.exit)
 
         # Initialize the user interface
         self.create_widgets()
@@ -21,15 +22,15 @@ class GridConfigApp(tk.Tk):
 
     def create_widgets(self):
         # Configuration Frame on the Left
-        left_frame = ttk.Frame(self)
-        left_frame.grid(row=0, column=0, padx=10, pady=10)
+        self.left_frame = ttk.Frame(self)
+        self.left_frame.grid(row=0, column=0, padx=10, pady=10)
         
         # Toggle Button
-        self.toggle_button = ttk.Button(left_frame, text="Analysis Mode", command=self.toggle_input_mode)
+        self.toggle_button = ttk.Button(self.left_frame, text="Analysis Mode", command=self.toggle_input_mode)
         self.toggle_button.grid(row=0, column=0, padx=10, pady=10)
 
         # Grid Configuration
-        self.config_frame = ttk.LabelFrame(left_frame, text="Grid Configuration")
+        self.config_frame = ttk.LabelFrame(self.left_frame, text="Grid Configuration")
         self.config_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         # self.init_single_value_inputs()
         
@@ -46,17 +47,42 @@ class GridConfigApp(tk.Tk):
         self.k_input.grid(row=2, column=1, padx=5, pady=5)
 
         # Algorithm Selection
-        self.algo_frame = ttk.LabelFrame(left_frame, text="Select Algorithm")
+        self.algo_frame = ttk.LabelFrame(self.left_frame, text="Select Algorithm")
         self.algo_frame.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
         self.algo_var = tk.StringVar()
-        ttk.Radiobutton(self.algo_frame, text="Find Max Solutions", value="max_solutions", variable=self.algo_var).grid(row=0, column=0, sticky="w")
-        ttk.Radiobutton(self.algo_frame, text="Random Greedy", value="random_greedy", variable=self.algo_var).grid(row=1, column=0, sticky="w")
-        ttk.Radiobutton(self.algo_frame, text="Min Conflict", value="min_conflict", variable=self.algo_var).grid(row=2, column=0, sticky="w")
+        ttk.Radiobutton(self.algo_frame, text="Find Max Solutions", value="max_solutions", variable=self.algo_var, command = lambda : self.show_args()).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(self.algo_frame, text="Random Greedy", value="random_greedy", variable=self.algo_var, command = lambda : self.show_args()).grid(row=1, column=0, sticky="w")
+        ttk.Radiobutton(self.algo_frame, text="Min Conflict", value="min_conflict", variable=self.algo_var, command = lambda : self.show_args()).grid(row=2, column=0, sticky="w")
+        
+        self.args_frame = ttk.LabelFrame(self.left_frame, text="Enter Arguments")
+        self.args_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
         # Run Button
-        self.run_button = ttk.Button(left_frame, text="Run", command=self.run_algorithm)
-        self.run_button.grid(row=3, column=0, padx=10, pady=10)
+        self.run_button = ttk.Button(self.left_frame, text="Run", command=self.run_algorithm)
+        self.run_button.grid(row=4, column=0, padx=10, pady=10)
+
+    def show_args(self):
+        self.args_frame.destroy()
+        self.args_frame = ttk.LabelFrame(self.left_frame, text="Enter Arguments")
+        self.args_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
+        selected = self.algo_var.get()
+        for widget in self.args_frame.winfo_children():
+            widget.destroy()
+        if selected == "Find Max Solutions":
+            self.args_max_solutions()
+        elif selected == "Random Greedy":
+            self.args_random_greedy()
+        elif selected == "min_conflict":
+            self.args_min_conflict()
+        
+    def args_random_greedy(self):
+        return
+    
+    def args_min_conflict(self):
+        ttk.Label(self.args_frame, text="max_iters:").grid(row=0, column=0, padx=5, pady=5)
+        self.max_iter_input = ttk.Entry(self.args_frame, width=10)
+        self.max_iter_input.grid(row=0, column=1, padx=5, pady=5)
         
     def toggle_input_mode(self):
         # Clear existing widgets
@@ -103,17 +129,17 @@ class GridConfigApp(tk.Tk):
     def create_plot(self):
         # Plotting Frame on the Right
         self.plot_frame = ttk.Frame(self)
-        self.plot_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
+        self.plot_frame.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+        
 
         # Placeholder for Matplotlib Figure
-        # self.figure = plt.Figure(figsize=(5, 4), dpi=100)
-        # self.ax = self.figure.add_subplot(111)  # Adding a subplot
+        size = self.winfo_height()
         try:
             d = int(self.d_input.get())
         except:
             d = 2
             pass
-        self.figure, self.ax = plt.subplots(figsize=(5, 4), dpi=80, subplot_kw={'projection': '3d'} if d == 3 else None)
+        self.figure, self.ax = plt.subplots(figsize=((size * 1.2) / 80, size / 80), dpi=80, subplot_kw={'projection': '3d'} if d == 3 else None)
         self.ax.grid(True)  # Enable grid
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.plot_frame)
         self.canvas.draw()
@@ -141,11 +167,13 @@ class GridConfigApp(tk.Tk):
             if algorithm == 'max_solutions':
                 pass
             elif algorithm == 'random_greedy':
-                run_and_save('Data', Grid.random_greedy, ns=ns, ds=ds, ks=ks, parallel=False)
+                data = run_linear(func=Grid.random_greedy, ns=ns, ds=ds, ks=ks)
             elif algorithm == 'min_conflict':
-                run_and_save('Data', Grid.min_conflict, ns=ns, ds=ds, ks=ks, parallel=False)
+                kwargs = {"max_iter": int(self.max_iter_input.get())}
+                data = run_linear(func=Grid.min_conflict, ns=ns, ds=ds, ks=ks, **kwargs)
                 
-            graph(f'Data/{algorithm}', runner=runner, base=(values['n'][0], values['d'][0], values['k'][0]))
+            
+            scatter(data)
                     
         else:
             self.create_plot()
@@ -161,7 +189,8 @@ class GridConfigApp(tk.Tk):
             elif algorithm == 'random_greedy':
                 gp = g.random_greedy(allowed_in_line=k)
             elif algorithm == 'min_conflict':
-                gp = g.min_conflict(allowed_in_line=k)
+                kwargs = {"max_iter": int(self.max_iter_input.get())}
+                gp = g.min_conflict(allowed_in_line=k, **kwargs)
                 
             # Clear the current plot
             self.ax.clear()
@@ -169,6 +198,10 @@ class GridConfigApp(tk.Tk):
             g.make_grid(self.ax, gp)
 
         self.canvas.draw()
+        
+    def exit(self):
+        self.destroy()
+        exit(0)
 
 # Create and run the application
 app = GridConfigApp()

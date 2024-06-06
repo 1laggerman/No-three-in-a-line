@@ -8,13 +8,13 @@ import math
 
 # script for adding additional value to RunData 
 
-filename = "Data/min_conflict.JSON"
+filename = "Data/random_greedy.JSON"
 
 with open(filename, "r") as json_file:
     existing_data: list[RunData] = json.load(json_file)
 
 for item in existing_data:
-    item["args"]['start_from'] = None
+    item['avg_time'] = None
     
 updated_data = existing_data
 print(existing_data)

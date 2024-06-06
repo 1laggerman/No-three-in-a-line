@@ -1,10 +1,10 @@
 # import math
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from package.Point import Point as Point
 from package.Grid import Grid as Grid
 import json
-from package.statistics import to_json_file, run_and_save, graph, run, RunData, run_parallel, bind_func_args
+from package.statistics import to_json_file, run_and_save, run_linear, RunData, run_batch_parallel, bind_func_args, run_parallel, scatter
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
 import random
@@ -64,17 +64,52 @@ def counter(n: int):
 
 # Example usage
 if __name__ == "__main__":
-    ks = [2, 3, 4]
-    ds = [2, 3, 4]
-    ns = range(3, 11)
-    iters = 5
-    func = Grid.min_conflict  # Replace 'some_function' with the actual function you intend to use
+    ks = [2]
+    ds = [3]
+    ns = range(3, 8)
+    iters = 10
+    func = Grid.min_conflict
     # func_args = ()  # Replace these with actual arguments for 'func'
+    
+    # data = run_batch_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
+    # data = run_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
+    
+    # run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True)
+    
+    # graph('Data/backup/min_conflict.JSON', base=(2, 4, 2), stop_at=10, runner='n')
+    
+    # scatter(run_linear(func=func, iters=5, ns=ns, ds=ds, ks=ks))
+    # plt.show()
 
 
+    # linear = run(func, ns=ns, ds=ds, ks=ks, iters=iters, max_iter=150)
+    # parallel = r_p(func, ns=ns, ds=ds, ks=ks, iters=iters, max_iter=150)
+    
+    # diff = np.zeros(len(linear))
+    # for i in range(len(linear)):
+        # diff[i] = linear[i]["avg_time"] - parallel[i]["avg_time"]
+        
+    # print(diff.mean())
+    # print(diff.std())
+    
+    # print(linear)
+    # print("-----------------")
+    # sorted = linear.copy()
+    # sorted.sort(key=lambda x: x["avg_time"])
+    
+    # sum_dist = 0
+    # for i in range(len(sorted)):
+    #     if sorted[i] == linear[i]:
+    #         sum_dist += 1
+    # print(sum_dist / len(sorted))
+    
+    
+    
+    # print(parallel)
     # bind_func_args(func, priority=[{'sorted': False, 'max_iter': 50}, {'max_iter': 150, 'abc': 5, 'a': 5}], max_iter=100, allowed_in_line=5)
     # results = run_parallel(func=func, ks=ks, ds=ds, ns=ns, iters=iters)
-    run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
+    
+    # run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
     # print(results)
 
 
