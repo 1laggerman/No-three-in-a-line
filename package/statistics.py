@@ -234,14 +234,6 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
 
     save_args = {name: value for name, value in func_args.items() if name not in dont_save_params}
     
-    num_processes = multiprocessing.cpu_count()
-
-    pool = multiprocessing.Pool(processes=num_processes)
-    manager = multiprocessing.Manager()
-    queue = manager.Queue()
-    
-    time_start = time.time()
-    
     jobs = [(n, d, k) for k in ks for d in ds for n in ns]
     
     jobs.sort(key=lambda j: math.pow(j[0], j[1]) / j[2], reverse=True) # sort so the heaviest tasks are first.
@@ -253,6 +245,15 @@ def run_parallel(func: Callable[..., GridPoints], *args, iters: int = 5, ns = ra
         results.append({"n": n, "d": d, "k": k, "avg_points": 0, "max_points": 0, "total_runs": 0, "args": save_args})
 
     tasks = [(i, n, d, k, func, func_args) for i, (n, d, k) in jobs for _ in range(iters)]
+    
+    num_processes = min(multiprocessing.cpu_count(), len(tasks))
+    print(f"running with {num_processes} processes")
+
+    pool = multiprocessing.Pool(processes=num_processes)
+    manager = multiprocessing.Manager()
+    queue = manager.Queue()
+    
+    time_start = time.time()
     
     total_tasks = len(tasks)
     with tqdm.tqdm(total=total_tasks, position=0, leave=True) as pbar:

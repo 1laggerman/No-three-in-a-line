@@ -111,6 +111,13 @@ class Grid:
         # plt.plot(iters)
         # plt.show()
         return best_state
+    
+    def circular_build(self):
+        C = np.zeros(self.d * self.n**2, dtype=int)
+        for point in np.ndindex(*(self.n,) * self.d):
+            i_x = sum((x+1)**2 for x in point)
+            C[i_x] += 1
+        return np.max(C)
         
     def __str__(self):
         gridStr = '['

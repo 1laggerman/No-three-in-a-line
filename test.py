@@ -65,11 +65,15 @@ def counter(n: int):
 # Example usage
 if __name__ == "__main__":
     ks = [2]
-    ds = [3]
-    ns = range(3, 8)
+    ds = [6]
+    ns = [6]
     iters = 10
     func = Grid.min_conflict
     # func_args = ()  # Replace these with actual arguments for 'func'
+    kwargs = {"max_iter": 1000}
+    
+    run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True, **kwargs)
+    
     
     # data = run_batch_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
     # data = run_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
