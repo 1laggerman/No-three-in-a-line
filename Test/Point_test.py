@@ -1,7 +1,7 @@
 import unittest
 
-from package.PointG import PointG as Point
-from package.GridG import GridG as Grid
+from package.Point import Point as Point
+from package.Grid import Grid as Grid
 
 from package.GridPointsStruct import GridPoints
 

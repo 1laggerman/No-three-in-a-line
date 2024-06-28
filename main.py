@@ -1,14 +1,13 @@
 import random
 from timeit import default_timer as timer
-from package import PointG, GridG as Point, Grid
+from package import Point, Grid as Point, Grid
 
 def __main__():
-    # order_solution(6)
-    grid = Grid(n=10, d=2)
-    grid.find_max_solutions_2D()
-    grid.draw_grid(solutionID=[0])
     
-    # grid.random_chooser_with_valid(1)
+    grid = Grid(n=10, d=2)
+    grid.draw_grid()
+    # grid.add_point(Point(0, 0))
+    # grid.draw_grid()
     
 
 

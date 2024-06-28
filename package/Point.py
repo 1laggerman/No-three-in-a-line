@@ -1,74 +1,104 @@
-class Point:
-    x = 0
-    y = 0
-    z = 0
+import numpy as np
 
-    def __init__(self, x: int = 0, y: int = 0, z: int = 0):
-        self.x = x
-        self.y = y
-        self.z = z
+
+class Point:
+    coords: np.ndarray
+    n: int
     
+    def __init__(self, *coordinates: int, n: int = 3):
+        self.coords = np.array([x for x in coordinates])
+        self.n = n # max value of coordinates, for hashing porposes
+        
     def __str__(self) -> str:
-        return f"({self.x}, {self.y}, {self.z})"
+        pointStr = '('
+        i = 0
+        while i < self.coords.__len__() - 1:
+            pointStr += f'{self.coords[i]}, '
+            i = i + 1
+        pointStr += f'{self.coords[i]})'
+        return pointStr
+    
     def __repr__(self):
         return str(self)
         
     def __add__(self, __other: "Point"):
-        return Point(self.x + __other.x, self.y + __other.y, self.z + __other.z)
+        return Point(*(self.coords + __other.coords))
     
-    def __eq__(self, __value: "Point") -> bool:
-        if self.x == __value.x and self.y == __value.y and self.z == __value.z:
-            return True
-        return False
+    def mul(self, __other: "Point"):
+        return Point(*(self.coords * __other.coords))
     
-    def __gt__(self, __other: "Point") -> bool:
-        if self.z != __other.z:
-            return self.z > __other.z
-        elif self.x != __other.x:
-            return self.x > __other.x
-        return self.y > __other.y
+    def __matmul___(self, __other: "Point"):
+        return self.coords @ __other.coords
+        
+    def __truediv__(self, scalar):
+        return Point(*(self.coords / scalar))
     
-    def __ge__(self, __other: "Point") -> bool:
-        if self.z != __other.z:
-            return self.z > __other.z
-        if self.x != __other.x:
-            return self.x >= __other.x
-        return self.y >= __other.y
+    def __floordiv__(self, scalar):
+        return Point(*(self.coords // scalar))
+    
+    def __sub__(self, __other: "Point"):
+        return Point(*(self.coords - __other.coords))
     
     def __hash__(self) -> int:
-        return self.x + (self.y * self.n) + (self.z * pow(self.n, 2))
+        a = 1
+        s = 0
+        for i in range(self.coords.shape[0]):
+            s += a * self.coords[i]
+            a *= self.n
+            
+        return int(s)
+        
+    def __eq__(self, value: "Point") -> bool:
+        return np.all(self.coords == value.coords)
+    
+    def __gt__(self, __other: "Point") -> bool:
+        eq = np.where(self.coords != __other.coords)[0]
+        if eq.__len__() == 0:
+            return False
+        key_index = np.max(eq)
+        return self.coords[key_index] > __other.coords[key_index]
+    
+    def __ge__(self, __other: "Point") -> bool:
+        eq = np.where(self.coords != __other.coords)[0]
+        if eq.__len__() == 0:
+            return True
+        key_index = np.max(eq)
+        return self.coords[key_index] > __other.coords[key_index]
+    
+    def max_cord(self) -> int:
+        return np.max(self.coords)
+    
+    def min_cord(self) -> int:
+        return np.min(self.coords)
+    
+    def onTheSameLineFast(self, point2: "Point", point3: "Point"):
+        v1 = (point2 - self).coords
+        v2 = (point3 - self).coords
+        angle = (v1 @ v2.transpose()) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+        return np.arccos(np.clip(np.abs(angle), -1, 1)) < 1e-10
     
     def onTheSameLine(self, point2: "Point", point3: "Point"):
-                
-        if self == point2 or self == point3 or point2 == point3:
-            return True
-        
-        dx2 = self.x - point2.x
-        dx3 = self.x - point3.x
-        dy2 = self.y - point2.y
-        dy3 = self.y - point3.y
-        
-        if dx2 == 0 and dx3 == 0:
-            # dx1 = 0, dx2 = 0
-            if dy2 == 0 and dy3 == 0:
-                return True
-            elif dy2 == 0 or dy3 == 0:
+        for dim in range(self.coords.__len__() - 1):
+            slope = None
+            
+            dx = point2.coords[dim] - self.coords[dim]
+            if dx == 0:
+                current_slope = float('inf')
+            else:
+                current_slope = (point2.coords[dim + 1] - self.coords[dim + 1]) / dx
+            if slope is not None and current_slope != slope:
                 return False
-            Myz2 = (self.z - point2.z) / dy2
-            Myz3 = (self.z - point3.z) / dy3
-            if Myz2 != Myz3:
+            
+            slope = current_slope
+            
+            dx = point3.coords[dim] - point2.coords[dim]
+            if dx == 0:
+                current_slope = float('inf')
+            else:
+                current_slope = (point3.coords[dim + 1] - point2.coords[dim + 1]) / dx
+            if slope is not None and current_slope != slope:
                 return False
-            return True
-        elif dx2 == 0 or dx3 == 0:
-            return False
-
-        Mxy2 = dy2 / dx2
-        Mxy3 = dy3 / dx3
-        if Mxy2 != Mxy3:
-            return False
-        Mxz2 = (self.z - point2.z) / dx2
-        Mxz3 = (self.z - point3.z) / dx3
-        if Mxz2 != Mxz3:
-            return False
+            
         return True
+        
     

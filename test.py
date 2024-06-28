@@ -1,119 +1,138 @@
 # import math
-# import numpy as np
-# import matplotlib.pyplot as plt
-from package.PointG import PointG as Point
-from package.GridG import GridG as Grid
+import numpy as np
+import matplotlib.pyplot as plt
+from package.Point import Point as Point
+from package.Grid import Grid as Grid
 import json
-from package.statistics import to_json_file, run_and_save, run, graph
+from package.statistics import to_json_file, run_and_save, run_linear, RunData, run_batch_parallel, bind_func_args, run_parallel, scatter
 from package.GridPointsStruct import GridPoints
+from package.collision import collision
+import random
 
-# run_and_save("Data", Grid.random_greedy, ns=range(3, 4), ds=range(2, 10))
-
-# run_and_save("Data", Grid.random_greedy, iters=5, ns=[10], ds=[2], ks=range(2, 10))
-graph("Data/random_greedy.JSON", runner="k", base=(10, 2, 2), stop_at=10)
-
-# print(res)
-# to_json_file()
-
-# graph("Data/random_greedy.JSON", runner="d", base=(3, 2, 2))
-
-# g = Grid(2, 3)
-# VP = GridPoints.fromGrid([], g)
-
-# n = 10
-# d = 2
-# k = 10
-
-# g = Grid(n=n, d=d)
-# s = g.random_greedy(allowed_in_line=k)
-# print(s[1])
-
-# new_data = [{
-#     "n": n,
-#     "d": d,
-#     "k": k,
-#     "avg_points": s[1],
-#     "total_runs": 2
-# }]
-
-# to_json_file("Data", new_data, alg="random_greedy")
-
-# # Define the filename for your JSON file
-# filename = "Data/random_greedy.JSON"
-
-# with open(filename, "r") as json_file:
-#     existing_data = json.load(json_file)
-
-# # Check if data for the given n, d, and k already exists
-# print(existing_data)
-# for new_item in new_data:
-#     found = False
-#     for item in existing_data:
-#         print(item)
-#         if item["n"] == new_item["n"] and item["d"] == new_item["d"] and item["k"] == new_item["k"]:
-#             item["avg_points"] = (item["avg_points"] * item["total_runs"] + new_item["avg_points"] * new_item["total_runs"]) / (item["total_runs"] + new_item["total_runs"])
-#             item["total_runs"] += new_item["total_runs"]
-#             found = True
-#             break
-#     if not found:
-#         existing_data.append(new_data)
-
-# # If data doesn't exist, add it to the existing data
+import itertools as it
+from copy import deepcopy
+import time
+import math
+import tqdm
 
 
-# # Write the updated data back to the file
-# with open(filename, "w") as json_file:
-#     json.dump(existing_data, json_file)
 
-# print("Data has been updated in", filename)
-# valid_points = GridPoints(g.getAllValidPoints(), n=n, d=d)
-# chosen_points = GridPoints([], n=n, d=d)
-
-# l: list[Point] = [Point(0, 0, n=3), Point(2, 0, n=3), Point(2, 1, n=3), Point(3, 0, n=3), Point(3, 3, n=3), Point(1, 2, n=3)]
-# l.extend([Point(3, 1, n=3), Point(1, 3, n=3), Point(0, 2, n=3), Point(2, 3, n=3), Point(1, 1, n=3)])
-# for point in l:
-#     added_point = valid_points.l[valid_points.m[tuple(point.cords)]]
-#     valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-#     chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 0, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(2, 3, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(3, 3, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(1, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
-
-# added_point = valid_points.l[valid_points.m[tuple(Point(1, 2, n=3).cords)]]
-# valid_points = g.removeInValidPoints([added_point], valid_points, chosen_points, k_in_line=3)
-# chosen_points.append(added_point)
+import multiprocessing
+from multiprocessing import Pool, Manager
 
 
-# print(valid_points)
-# print(chosen_points)
-# print("max: ", int(2 * math.pow(n, d - 1)), "points")
-# print(g.random_greedy())
-# graph_avg(Grid.random_greedy, iters = 10, ns=range(3, 5), ds=range(3, 4))
+def counter(n: int):
+    i = 0
+    while i < n:
+        i += 1
+    print("Done!")
+    
 
-# g = Grid(3, 2)
-# VP = GridPoints(g.getAllValidPoints(), 3, 2)
+# def worker(args):
+#     n, d, k, iters, func, func_args = args
+#     g = Grid(n, d)
+#     print(f'starting run for n={n}, d={d}, k={k}')
 
-# VP.remove(Point(0, 0))
-# VP.remove(Point(2, 2))
-# VP.remove(Point(1, 1))
+#     sum_points = 0
+#     max_points = 0
+#     for _ in range(iters):
+#         func(*func_args)
 
-# valid_points = GridPoints([Point(1, 2), Point(1, 0), Point(2, 0), Point(0, 1), Point(0, 2), Point(2, 1)], 3, 2)
+#     return {"n": n, "d": d, "k": k, "avg_points": sum_points / iters, "max_points": max_points, "total_runs": iters, "args": func_args}
 
-# print(valid_points == VP)
+# def run_parallel_computation(ks, ds, ns, iters, func, func_args):
+#     num_processes = multiprocessing.cpu_count()  # Automatically determine the number of processes to use
+#     pool = Pool(processes=num_processes)
+#     manager = Manager()
+#     queue = manager.Queue()
+
+#     results = []
+
+#     tasks = [(n, d, k, iters, func, func_args) for k in ks for d in ds for n in ns]
+#     async_results = [pool.apply_async(worker, (task,), callback=lambda x: queue.put(x)) for task in tasks]
+
+#     pool.close()
+#     pool.join()
+
+#     # Collect all results from the queue
+#     while not queue.empty():
+#         result = queue.get()
+#         results.append(result)
+#         print(f"finished n={result['n']}, d={result['d']}, k={result['k']}")
+
+#     return results
+
+# Example usage
+if __name__ == "__main__":
+    ks = [2]
+    ds = [6]
+    ns = [6]
+    iters = 10
+    func = Grid.min_conflict
+    # func_args = ()  # Replace these with actual arguments for 'func'
+    kwargs = {"max_iter": 1000}
+    
+    run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True, **kwargs)
+    
+    
+    # data = run_batch_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
+    # data = run_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)
+    
+    # run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True)
+    
+    # graph('Data/backup/min_conflict.JSON', base=(2, 4, 2), stop_at=10, runner='n')
+    
+    # scatter(run_linear(func=func, iters=5, ns=ns, ds=ds, ks=ks))
+    # plt.show()
+
+
+    # linear = run(func, ns=ns, ds=ds, ks=ks, iters=iters, max_iter=150)
+    # parallel = r_p(func, ns=ns, ds=ds, ks=ks, iters=iters, max_iter=150)
+    
+    # diff = np.zeros(len(linear))
+    # for i in range(len(linear)):
+        # diff[i] = linear[i]["avg_time"] - parallel[i]["avg_time"]
+        
+    # print(diff.mean())
+    # print(diff.std())
+    
+    # print(linear)
+    # print("-----------------")
+    # sorted = linear.copy()
+    # sorted.sort(key=lambda x: x["avg_time"])
+    
+    # sum_dist = 0
+    # for i in range(len(sorted)):
+    #     if sorted[i] == linear[i]:
+    #         sum_dist += 1
+    # print(sum_dist / len(sorted))
+    
+    
+    
+    # print(parallel)
+    # bind_func_args(func, priority=[{'sorted': False, 'max_iter': 50}, {'max_iter': 150, 'abc': 5, 'a': 5}], max_iter=100, allowed_in_line=5)
+    # results = run_parallel(func=func, ks=ks, ds=ds, ns=ns, iters=iters)
+    
+    # run_and_save(file_path='Data', func=func, ks=ks, ds=ds, ns=ns, iters=iters, parallel=True, max_iter=100)
+    # print(results)
+
+
+
+
+
+# counter(math.pow(10, 8))
+# iters = 10000
+# i = 0
+# for _ in tqdm.tqdm(range(iters)):
+#     j = 0
+#     with tqdm.tqdm(total=100000000, position=1, leave=False) as bar:
+#         while j < 100000000:
+#             j += 1
+#             bar.update(1)
+#     i += 1
+
+# print(run_parallel(counter, iters=10, ns=range(3, 11), ds=[3], ks=[2]))
+
+# run_and_save("Data", Grid.random_greedy, iters=10, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))
+
+# run_and_save("Data", Grid.min_conflict, iters=5, ns=range(3, 11), ds=range(2, 5), ks=range(2, 5))
