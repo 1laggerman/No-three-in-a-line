@@ -1,10 +1,12 @@
 from package.Point import Point
 
 class collision():
+    conflict_idx: int
     amount: int = 0
     lines: list[list[Point]]
     
     def __init__(self) -> None:
+        self.conflict_idx = -1
         self.amount = 0
         self.lines = []
         

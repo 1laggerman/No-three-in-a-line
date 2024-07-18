@@ -15,10 +15,8 @@ import time
 import math
 import tqdm
 
-
-
-import multiprocessing
 from multiprocessing import Pool, Manager
+
 
 
 def counter(n: int):
@@ -27,6 +25,13 @@ def counter(n: int):
         i += 1
     print("Done!")
     
+
+gp = GridPoints(4, 2, 2)
+
+gp.add(Point(0, 0))
+gp.add(Point(2, 2))
+gp.add(Point(2, 1))
+print(gp.get_all_lines(Point(1, 1)))
 
 # def worker(args):
 #     n, d, k, iters, func, func_args = args
@@ -63,16 +68,16 @@ def counter(n: int):
 #     return results
 
 # Example usage
-if __name__ == "__main__":
-    ks = [2]
-    ds = [6]
-    ns = [6]
-    iters = 10
-    func = Grid.min_conflict
-    # func_args = ()  # Replace these with actual arguments for 'func'
-    kwargs = {"max_iter": 1000}
+# if __name__ == "__main__":
+    # ks = [2]
+    # ds = [6]
+    # ns = [6]
+    # iters = 10
+    # func = Grid.min_conflict
+    # # func_args = ()  # Replace these with actual arguments for 'func'
+    # kwargs = {"max_iter": 1000}
     
-    run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True, **kwargs)
+    # run_and_save(file_path="Data", func=func, iters=iters, ns=ns, ds=ds, ks=ks, parallel=True, **kwargs)
     
     
     # data = run_batch_parallel(func=func, iters=iters, ns=ns, ds=ds, ks=ks)

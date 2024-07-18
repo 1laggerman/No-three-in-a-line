@@ -6,7 +6,7 @@ class Point:
     n: int
     
     def __init__(self, *coordinates: int, n: int = 3):
-        self.coords = np.array([x for x in coordinates])
+        self.coords = np.array(coordinates)
         self.n = n # max value of coordinates, for hashing porposes
         
     def __str__(self) -> str:
