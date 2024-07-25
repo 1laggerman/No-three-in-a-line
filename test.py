@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from package.Point import Point as Point
 from package.Grid import Grid as Grid
 import json
-from package.statistics import to_json_file, run_and_save, run_linear, RunData, run_batch_parallel, bind_func_args, run_parallel, scatter
+import package.statistics as st
+from package.statistics import to_json_file, run_and_save, run_linear, RunData, run_batch_parallel, bind_func_args, run_parallel, scatter, plot_line
 from package.GridPointsStruct import GridPoints
 from package.collision import collision
 import random
@@ -18,20 +19,24 @@ import tqdm
 from multiprocessing import Pool, Manager
 
 
+plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.max_points)
+plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.avg_points)
+plt.show()
 
-def counter(n: int):
-    i = 0
-    while i < n:
-        i += 1
-    print("Done!")
+
+# def counter(n: int):
+#     i = 0
+#     while i < n:
+#         i += 1
+#     print("Done!")
     
 
-gp = GridPoints(4, 2, 2)
+# gp = GridPoints(4, 2, 2)
 
-gp.add(Point(0, 0))
-gp.add(Point(2, 2))
-gp.add(Point(2, 1))
-print(gp.get_all_lines(Point(1, 1)))
+# gp.add(Point(0, 0))
+# gp.add(Point(2, 2))
+# gp.add(Point(1, 1))
+# print(gp.get_all_lines(Point(1, 1)))
 
 # def worker(args):
 #     n, d, k, iters, func, func_args = args

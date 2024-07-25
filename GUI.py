@@ -54,7 +54,8 @@ class GridConfigApp(tk.Tk):
         ttk.Radiobutton(self.algo_frame, text="Find Max Solutions", value="max_solutions", variable=self.algo_var, command = lambda : self.show_args()).grid(row=0, column=0, sticky="w")
         ttk.Radiobutton(self.algo_frame, text="Random Greedy", value="random_greedy", variable=self.algo_var, command = lambda : self.show_args()).grid(row=1, column=0, sticky="w")
         ttk.Radiobutton(self.algo_frame, text="Min Conflict", value="min_conflict", variable=self.algo_var, command = lambda : self.show_args()).grid(row=2, column=0, sticky="w")
-        
+        ttk.Radiobutton(self.algo_frame, text="MCTS UCT", value="MCTS_uct", variable=self.algo_var, command = lambda : self.show_args()).grid(row=3, column=0, sticky="w")
+        ttk.Radiobutton(self.algo_frame, text="Alpha zero", value="Alpha_zero", variable=self.algo_var, command = lambda : self.show_args()).grid(row=4, column=0, sticky="w")
         self.args_frame = ttk.LabelFrame(self.left_frame, text="Enter Arguments")
         self.args_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
@@ -173,6 +174,8 @@ class GridConfigApp(tk.Tk):
                 data = run_linear(func=Grid.min_conflict, ns=ns, ds=ds, ks=ks, **kwargs)
                 
             
+            scatter(data)
+            self.create_plot()
             scatter(data)
                     
         else:

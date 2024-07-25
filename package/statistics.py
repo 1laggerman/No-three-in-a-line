@@ -48,9 +48,9 @@ def max_points(data: RunData):
 def scatter(data: list[RunData], show: tuple[bool] = (True, True)):
     for elemnt in data:
         if show[0]:
-            plt.scatter(elemnt["n"], elemnt["avg_points"], c='r')
+            plt.scatter(int(elemnt["n"]), int(elemnt["avg_points"]), c='r')
         if show[1]:
-            plt.scatter(elemnt["n"], elemnt["max_points"], c='b')
+            plt.scatter(int(elemnt["n"]), int(elemnt["max_points"]), c='b')
             
 # def make_plot()
 
@@ -90,18 +90,18 @@ def plot_line(data_file: str, runner: str, base: tuple = (3, 2, 2), stop_at: int
     data.sort(key=lambda x: x[1])
     axis = [x[1] for x in data]
     data = [x[0] for x in data]
-    print(data)
-    print(axis)
+    # print(data)
+    # print(axis)
     fig = plt.figure(data_file.split('/')[-1].split('.')[0] + f" {others[0]}={values[0]}, {others[1]}={values[1]}")
-    ax = plt.gca()
-    # ax.set_xlim([xmin, xmax])
-    ax.spines['top'].set_visible(False)
-    # ax.set_ylim([0, 1.01])
-    plt.title(f"{others[0]}={values[0]}, {others[1]}={values[1]}")
-    plt.plot(axis, data)
+    # ax = plt.gca()
+    # # ax.set_xlim([xmin, xmax])
+    # ax.spines['top'].set_visible(False)
+    # # ax.set_ylim([0, 1.01])
+    # plt.title(f"{others[0]}={values[0]}, {others[1]}={values[1]}")
+    plt.plot(axis, data, label=func.__name__)
     plt.xlabel(runner)
     plt.ylabel(func.__name__)
-    plt.show()
+    # plt.show()
     
 
 def graph_avg(func: Callable[..., GridPoints], *args, iters: int = 10, ns = range(3, 10), ds=range(2, 3)):

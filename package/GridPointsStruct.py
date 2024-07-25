@@ -131,21 +131,13 @@ class GridPoints():
         
         
     def recover(self, p: Point):
-        mat_idx = tuple(p.coords)
-        col: collision = self.collision_mat[mat_idx]
-        if col is None or col.amount == 0:
-            self.append_valid(p)
-        else:
-            for point in self.chosen:
-                if point == p:
-                    break
-                chosen_line, valid_line = self.get_line(point, p)
-                if len(chosen_line) >= self.k - 2:
-                    lines = list(list(line) for line in it.combinations(chosen_line, max(self.k - 2, 1)))
-                    
-                    
-                
-                    
+        
+        lines = self.get_all_lines(p)
+
+        for line, effected in lines:
+            for effected_point in effected:
+                self.remove_collision(p, effected_point)
+  
     
     def remove(self, point: Point, from_valid: bool = False): # O(d)
         mat_idx = tuple(point.coords)
@@ -170,18 +162,18 @@ class GridPoints():
         else:
             self.chosen.pop()
             
-    def recover(self, p: Point):
-        suspects = np.where(self.collision_mat >= 0)
-        for j in range(len(suspects[0])):
-            suspect_point = tuple([suspects[k][j] for k in range(self.d)])
-            slot: collision = self.collision_mat[suspect_point]
-            i = 0
-            while i < len(slot.lines):
-                if p in slot.lines[i]:
-                    slot.lines.pop(i)
-                    slot.amount -= 1
-                    i -= 1
-                i += 1
+    # def recover(self, p: Point):
+    #     suspects = np.where(self.collision_mat >= 0)
+    #     for j in range(len(suspects[0])):
+    #         suspect_point = tuple([suspects[k][j] for k in range(self.d)])
+    #         slot: collision = self.collision_mat[suspect_point]
+    #         i = 0
+    #         while i < len(slot.lines):
+    #             if p in slot.lines[i]:
+    #                 slot.lines.pop(i)
+    #                 slot.amount -= 1
+    #                 i -= 1
+    #             i += 1
 
                      
     def add(self, p: Point):
@@ -236,7 +228,9 @@ class GridPoints():
 
         lines = self.get_all_lines(added_point) # O(k(n^d))
 
-        self.remove_valid(added_point)
+        added_loc = self.idx_mat[tuple(added_point.coords)]
+        if added_loc < 0:
+            self.remove_valid(added_point)
 
         for line, effected in lines: # O(n^(d-1))
             for effected_point in effected: # O(n - k)
@@ -340,6 +334,20 @@ class GridPoints():
         slot: collision = self.collision_mat[tuple(p.coords)]
         slot.amount += 1
         slot.lines.append(line)
+
+    def remove_collision(self, for_point: Point, with_point: Point):
+        slot: collision = self.collision_mat[tuple(for_point.coords)]
+        slot.amount -= 1
+        i = 0
+        while i < len(slot.lines):
+            had_collision = True
+            if with_point in slot.lines[i]:
+                slot.lines.pop(i)
+                i -= 1
+            i += 1
+        if len(slot.lines) == 0 and had_collision:
+            self.append_valid(for_point)
+
         
     def __contains__(self, key: Point): # O(d)
         return self.idx_mat[tuple(key.coords)] > 0
