@@ -19,9 +19,9 @@ import tqdm
 from multiprocessing import Pool, Manager
 
 
-plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.max_points)
-plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.avg_points)
-plt.show()
+# plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.max_points)
+# plot_line('Data/random_greedy.JSON', 'n', (3, 2, 2), 10, func=st.avg_points)
+# plt.show()
 
 
 # def counter(n: int):
@@ -31,11 +31,14 @@ plt.show()
 #     print("Done!")
     
 
-# gp = GridPoints(4, 2, 2)
+gp = GridPoints(4, 2, 2)
 
-# gp.add(Point(0, 0))
-# gp.add(Point(2, 2))
-# gp.add(Point(1, 1))
+gp.add(Point(0, 0))
+gp.add(Point(2, 2))
+gp.add(Point(1, 1))
+
+gp.remove(Point(0, 0))
+gp.remove(Point(1, 1))
 # print(gp.get_all_lines(Point(1, 1)))
 
 # def worker(args):

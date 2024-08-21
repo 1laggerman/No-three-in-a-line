@@ -79,6 +79,7 @@ def animate(frame_number):
         
     for p in it.product(range(n), repeat=d):
         slot: collision = gp.collision_mat[p]
+        print('frame: ', frame_number, 'slot: ', slot)
         axis.scatter([p[0]], [p[1]], s=100 * slot.amount, c='g', edgecolor='black', linewidth=2)
     # for point in gp.conflicted:
     #     # slot: collision = gp.collision_mat[tuple(point.coords)]
@@ -95,5 +96,5 @@ anim = animation.FuncAnimation(fig, animate, frames=50, interval=50, blit=True)
 # saving to m4 using ffmpeg writer 
 # writervideo = animation.FFMpegWriter(fps=1)
 writervideo = animation.PillowWriter(fps=1)
-anim.save('min_conflict_2.gif', writer=writervideo) 
+anim.save('test.gif', writer=writervideo) 
 plt.close() 

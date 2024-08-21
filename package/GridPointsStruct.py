@@ -69,12 +69,12 @@ class GridPoints():
             # point = Point(*conflicts[::-1][i], n=self.n)
         
         
-    def append_chosen(self, p: Point): # O(1)
+    def append_chosen(self, p: Point): # O(d)
         if p in self:
             return
         
         self.chosen.append(p)
-        self.idx_mat[tuple(p.coords)] = self.chosen.__len__()
+        self.idx_mat[tuple(p.coords)] = len(self.chosen)
         
     def append_valid(self, p: Point): # O(1)
         c = tuple(p.coords)
@@ -87,27 +87,33 @@ class GridPoints():
     def remove(self, p: Point):
         mat_idx = tuple(p.coords)
         list_idx = self.idx_mat[mat_idx] - 1
+
+        if list_idx < 0:
+            return
         
-        self.recover(p)
         self.chosen[list_idx] = self.chosen[-1]
         list_idx += 1
         last_point = self.chosen[-1]
         self.idx_mat[tuple(last_point.coords)] = list_idx
         self.idx_mat[mat_idx] = 0
+
+        self.chosen.pop()
+
+        self.recover(p)
         
-    def remove_chosen(self, p: Point):
+    def remove_chosen(self, p: Point): # O(d)
         mat_idx = tuple(p.coords)
-        hashed_list_index = self.idx_mat[mat_idx]
-        if hashed_list_index <= 0:
+        encoded_list_index = self.idx_mat[mat_idx]
+        if encoded_list_index <= 0:
             raise ValueError("Point is not chosen")
-        actual_list_idx = hashed_list_index - 1
+        actual_list_idx = encoded_list_index - 1
         
         self.chosen[actual_list_idx] = self.chosen[-1]
         
         last_point = self.chosen[-1]
-        hashed_list_index = actual_list_idx + 1
+        encoded_list_index = actual_list_idx + 1
         
-        self.idx_mat[tuple(last_point.coords)] = hashed_list_index
+        self.idx_mat[tuple(last_point.coords)] = encoded_list_index
         self.idx_mat[mat_idx] = 0
         
         self.chosen.pop()
@@ -130,37 +136,39 @@ class GridPoints():
         self.valid.pop()
         
         
-    def recover(self, p: Point):
+    def recover(self, removed_point: Point):
         
-        lines = self.get_all_lines(p)
+        lines = self.get_all_lines(removed_point)
+
+        self.conflicted.remove(removed_point)
 
         for line, effected in lines:
             for effected_point in effected:
-                self.remove_collision(p, effected_point)
+                self.remove_collision(effected_point, removed_point)
   
     
-    def remove(self, point: Point, from_valid: bool = False): # O(d)
-        mat_idx = tuple(point.coords)
-        list_idx = abs(self.idx_mat[mat_idx]) - 1
-        if list_idx < 0:
-            raise IndexError()
+    # def remove(self, point: Point, from_valid: bool = False): # O(d)
+    #     mat_idx = tuple(point.coords)
+    #     list_idx = abs(self.idx_mat[mat_idx]) - 1
+    #     if list_idx < 0:
+    #         raise IndexError()
         
-        if from_valid:
-            self.valid[list_idx] = self.valid[-1]
-            list_idx = -list_idx - 1
-            last_point = self.valid[-1]
-        else:
-            self.recover(point)
-            self.chosen[list_idx] = self.chosen[-1]
-            list_idx += 1
-            last_point = self.chosen[-1]
-        self.idx_mat[tuple(last_point.coords)] = list_idx
-        self.idx_mat[mat_idx] = 0
+    #     if from_valid:
+    #         self.valid[list_idx] = self.valid[-1]
+    #         list_idx = -list_idx - 1
+    #         last_point = self.valid[-1]
+    #     else:
+    #         self.chosen[list_idx] = self.chosen[-1]
+    #         list_idx += 1
+    #         last_point = self.chosen[-1]
+    #         self.recover(point)
+    #     self.idx_mat[tuple(last_point.coords)] = list_idx
+    #     self.idx_mat[mat_idx] = 0
         
-        if from_valid:
-            self.valid.pop()
-        else:
-            self.chosen.pop()
+    #     if from_valid:
+    #         self.valid.pop()
+    #     else:
+    #         self.chosen.pop()
             
     # def recover(self, p: Point):
     #     suspects = np.where(self.collision_mat >= 0)
@@ -190,15 +198,12 @@ class GridPoints():
             return
         
         for i in range(len(conflicts[0])):
-            # for j in range(len(conflicts[i])):
-                # point = Point(*conflicts[i][j], n=self.n)
             point_coords = tuple([conflicts[j][i] for j in range(len(conflicts))])
             self.conflicted.append(Point(*point_coords, n=self.n))
-            # point = Point(*conflicts[::-1][i], n=self.n)
             
     def get_line(self, p1: Point, p2: Point):
         chosen_line: list[Point] = []
-        valid_line: list[Point] = []
+        effected_line: list[Point] = []
         
         d = p1 - p2
         d = d // gcd(*tuple(d.coords))
@@ -209,7 +214,7 @@ class GridPoints():
             if is_chosen and point != p2:
                 chosen_line.append(point)
             elif not is_chosen and point != p2:
-                valid_line.append(point)
+                effected_line.append(point)
             point = point + d 
             
         point = p1 - d
@@ -218,10 +223,10 @@ class GridPoints():
             if is_chosen and point != p2:
                 chosen_line.append(point)
             elif not is_chosen and point != p2:
-                valid_line.append(point)
+                effected_line.append(point)
             point = point - d
         
-        return chosen_line, valid_line
+        return chosen_line, effected_line
         
     # O(k(n^d))
     def removeInValidPoints(self, added_point: Point):
@@ -237,7 +242,7 @@ class GridPoints():
                 c = tuple(effected_point.coords)
                 if self.idx_mat[c] < 0:
                     self.remove_valid(effected_point)
-                self.add_collision(added_point, line)
+                self.add_collision(effected_point, line)
 
 
     # def removeInValidPoints(self, added_point: Point):
@@ -336,7 +341,8 @@ class GridPoints():
         slot.lines.append(line)
 
     def remove_collision(self, for_point: Point, with_point: Point):
-        slot: collision = self.collision_mat[tuple(for_point.coords)]
+        mat_idx = tuple(for_point.coords)
+        slot: collision = self.collision_mat[mat_idx]
         slot.amount -= 1
         i = 0
         while i < len(slot.lines):
@@ -346,7 +352,10 @@ class GridPoints():
                 i -= 1
             i += 1
         if len(slot.lines) == 0 and had_collision:
-            self.append_valid(for_point)
+            if self.idx_mat[mat_idx] > 0:
+                self.conflicted.remove(for_point)
+            if self.idx_mat[mat_idx] == 0:
+                self.append_valid(for_point)
 
         
     def __contains__(self, key: Point): # O(d)
